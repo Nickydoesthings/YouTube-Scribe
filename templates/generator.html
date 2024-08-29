@@ -16,18 +16,20 @@
     <div id="loadingSpinner" class="loading-spinner" style="display:none;"></div>
     <div id="loadingText" class="loading-text" style="display:none;">Analyzing...</div>
 
-    {% if error %}
-    <div class="error-message">
-        <p>{{ error }}</p>
-    </div>
-    {% endif %}
-
     {% if summary %}
     <div class="summary-output">
         <h2>Generated Tutorial Summary:</h2>
-        {{ summary | safe }}
+        <div class="tutorial-content">
+            {{ summary | safe }}
+        </div>
     </div>
-    {% endif %}
+{% endif %}
+
+{% if error %}
+    <div class="error-message">
+        <p>{{ error }}</p>
+    </div>
+{% endif %}
 {% endblock %}
 
 <script>

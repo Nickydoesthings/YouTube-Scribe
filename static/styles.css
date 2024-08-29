@@ -141,3 +141,31 @@ h1 {
     white-space: pre-wrap;
     border: 1px solid #ced4da;
 }
+
+/* New styles for tutorial content */
+.tutorial-content {
+    line-height: 1.6;
+    font-size: 16px;
+    color: #495057;
+}
+
+/* List styling for ordered and unordered lists */
+.tutorial-content ol, .tutorial-content ul {
+    margin: 20px 0;
+    padding-left: 40px;
+}
+
+.tutorial-content li {
+    margin-bottom: 10px;
+}
+
+/* Styling for paragraph text within tutorial content */
+.tutorial-content p {
+    margin-bottom: 15px;
+}
+
+/* Additional heading levels */
+.tutorial-content h3, .tutorial-content h4 {
+    margin-top: 20px;
+    color: #343a40;
+}

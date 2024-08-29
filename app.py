@@ -4,6 +4,7 @@ import whisper
 import yt_dlp
 from openai import OpenAI
 import logging
+import markdown
 
 app = Flask(__name__)
 
@@ -53,7 +54,7 @@ def summarize_text(text):
             model="gpt-4o-mini",
             messages=[
                 {"role": "system", "content": "You are a tutorial maker. You seek to make written tutorials that are easy to follow and easy to read."},
-                {"role": "user", "content": f"This is an audio transcript of a tutorial or DIY project. Make a written tutorial based off this audio transcript. Start with a summary and list out what the user will need (if relevant) - then list out the steps they should take. Produce your output with visually pleasing style that's easy to follow. Don't include links unless necessary. :\n\n{text}"}
+                {"role": "user", "content": f"This is an audio transcript of a tutorial or DIY project. Make a written tutorial in Markdown based off this audio transcript. Start with a summary and list out what the user will need (if relevant) - then list out the steps they should take. Please use Markdown syntax, with headers for sections, ordered lists for steps, and appropriate spacing for readability. Assume the reader has only basic knowledge of the subject at hand. Don't include links unless necessary. :\n\n{text}"}
             ]
         )
 
@@ -69,6 +70,10 @@ def summarize_text(text):
 
 @app.route('/', methods=['GET', 'POST'])
 def home():
+    # Initialize some variables
+    error = None
+    html_summary = None
+
     if request.method == 'POST':
         youtube_link = request.form['youtubeLink']
         save_path = './'  # You can customize this path as needed
@@ -84,32 +89,33 @@ def home():
                 if transcript:
                     # Summarize the transcript
                     summary = summarize_text(transcript)
-                    
+
                     if summary:
+                        # Convert Markdown to HTML
+                        html_summary = markdown.markdown(summary)
+
                         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                            return summary  # Return just the summary for AJAX requests
+                            return html_summary  # Return just the HTML summary for AJAX requests
                         else:
-                            return render_template('generator.html', summary=summary)
+                            return render_template('generator.html', summary=html_summary)
                     else:
                         error = "Failed to generate summary."
                 else:
                     error = "Failed to transcribe the audio."
             else:
                 error = "Failed to download the YouTube audio."
-            
-            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                return jsonify({'error': error}), 400
-            else:
-                return render_template('generator.html', error=error)
 
         except Exception as e:
             error = f"An unexpected error occurred: {str(e)}"
-            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                return jsonify({'error': error}), 500
-            else:
-                return render_template('generator.html', error=error)
 
-    return render_template('generator.html')
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'error': error}), 400
+        else:
+            return render_template('generator.html', error=error)
+
+    return render_template('generator.html', summary=html_summary, error=error)
+
+
 
 @app.route('/about')
 def about():

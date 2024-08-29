@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>YouTube Scribe</h1>
+    <p>Enter a YouTube video URL to generate a written tutorial summary:</p>
+
+    <form id="generatorForm" action="/" method="POST">
+        <div class="form-group">
+            <label for="youtubeLink">YouTube Video URL:</label>
+            <input type="text" class="form-control" id="youtubeLink" name="youtubeLink" placeholder="https://www.youtube.com/watch?v=example" required>
+        </div>
+        <button type="submit" class="btn-primary">Submit</button>
+    </form>
+
+    <!-- Loading Spinner -->
+    <div id="loadingSpinner" class="loading-spinner" style="display:none;"></div>
+    <div id="loadingText" class="loading-text" style="display:none;">Analyzing...</div>
+
+    {% if error %}
+    <div class="error-message">
+        <p>{{ error }}</p>
+    </div>
+    {% endif %}
+
+    {% if summary %}
+    <div class="summary-output">
+        <h2>Generated Tutorial Summary:</h2>
+        {{ summary | safe }}
+    </div>
+    {% endif %}
+{% endblock %}
+
+<script>
+    document.getElementById('generatorForm').addEventListener('submit', function() {
+        // Show the spinner and the "Analyzing..." text
+        document.getElementById('loadingSpinner').style.display = 'block';
+        document.getElementById('loadingText').style.display = 'block';
+    });
+</script>

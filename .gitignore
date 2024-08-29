@@ -1,0 +1,23 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+env/
+.env/
+
+# Flask configuration
+instance/
+.flaskenv
+
+# Static files
+staticfiles/
+
+# Local environments
+.env
+
+# IDE settings (optional, depending on your editor)
+.vscode/
+.idea/

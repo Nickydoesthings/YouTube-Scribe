@@ -5,37 +5,88 @@
     <p>Enter a YouTube video URL to generate a written tutorial summary:</p>
 
     <form id="generatorForm" action="/" method="POST">
+        <!-- Form for submitting YouTube link -->
         <div class="form-group">
             <label for="youtubeLink">YouTube Video URL:</label>
-            <input type="text" class="form-control" id="youtubeLink" name="youtubeLink" placeholder="https://www.youtube.com/watch?v=example" required>
+            <!-- Input field for the YouTube URL -->
+            <input type="url" class="form-control" id="youtubeLink" name="youtubeLink" placeholder="https://www.youtube.com/watch?v=example" required>
         </div>
-        <button type="submit" class="btn-primary">Submit</button>
+        <!-- Submit button -->
+        <button type="submit" class="btn btn-primary">Submit</button>
     </form>
 
-    <!-- Loading Spinner -->
+    <!-- Loading Spinner (hidden by default) -->
     <div id="loadingSpinner" class="loading-spinner" style="display:none;"></div>
     <div id="loadingText" class="loading-text" style="display:none;">Analyzing...</div>
 
-    {% if summary %}
-    <div class="summary-output">
-        <h2>Generated Tutorial Summary:</h2>
-        <div class="tutorial-content">
-            {{ summary | safe }}
-        </div>
-    </div>
-{% endif %}
+    <div id="resultContainer">
+        {% if summary %}
+            <!-- If a summary is generated, display it here -->
+            <div class="summary-output">
+                <h2>Generated Tutorial Summary:</h2>
+                <div class="tutorial-content">
+                    {{ summary | safe }}  <!-- Render the Markdown content as HTML -->
+                </div>
+            </div>
+        {% endif %}
 
-{% if error %}
-    <div class="error-message">
-        <p>{{ error }}</p>
+        {% if error %}
+            <!-- If there's an error, display it here -->
+            <div class="alert alert-danger mt-3">
+                <strong>Error:</strong> {{ error }}
+            </div>
+        {% endif %}
     </div>
-{% endif %}
-{% endblock %}
 
-<script>
-    document.getElementById('generatorForm').addEventListener('submit', function() {
-        // Show the spinner and the "Analyzing..." text
-        document.getElementById('loadingSpinner').style.display = 'block';
-        document.getElementById('loadingText').style.display = 'block';
+    <!-- Move the script block to the end of the content block -->
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        document.getElementById('generatorForm').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent the form from submitting the traditional way
+            
+            // Show the spinner and the "Analyzing..." text when the form is submitted
+            document.getElementById('loadingSpinner').style.display = 'block';
+            document.getElementById('loadingText').style.display = 'block';
+
+            // Collect the form data
+            const formData = new FormData(this);
+
+            // Perform the AJAX request
+            fetch('/', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.text())
+            .then(data => {
+                // Hide the spinner and loading text
+                document.getElementById('loadingSpinner').style.display = 'none';
+                document.getElementById('loadingText').style.display = 'none';
+
+                // Update only the summary section
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(data, 'text/html');
+                const newSummary = doc.querySelector('.summary-output');
+                const resultContainer = document.getElementById('resultContainer');
+
+                // Clear the previous content
+                resultContainer.innerHTML = '';
+
+                // Append the new summary content
+                if (newSummary) {
+                    resultContainer.appendChild(newSummary);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('loadingSpinner').style.display = 'none';
+                document.getElementById('loadingText').style.display = 'none';
+                document.getElementById('resultContainer').innerHTML = '<div class="alert alert-danger mt-3"><strong>Error:</strong> Something went wrong. Please try again later.</div>';
+            });
+        });
     });
 </script>
+
+{% endblock %}

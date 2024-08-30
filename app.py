@@ -156,6 +156,12 @@ def home():
             logger.error(f"An unexpected error occurred: {e}")  # Log unexpected errors
             error = f"An unexpected error occurred: {e}"  # Set the error message for the user
 
+
+        finally: # 'Finally' always runs, regardless of whether an exception occurred or not
+            if audio_file_path and os.path.exists(audio_file_path):
+                os.remove(audio_file_path)  # Delete the audio file once we're done with it
+
+
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             # Return only the summary section as a response to the AJAX request
             return render_template('summary_partial.html', summary=html_summary, error=error)

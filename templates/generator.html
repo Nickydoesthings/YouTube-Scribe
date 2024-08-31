@@ -27,6 +27,12 @@
                 <div class="tutorial-content">
                     {{ summary | safe }}  <!-- Render the Markdown content as HTML -->
                 </div>
+                <!-- Button to download the summary as a PDF -->
+                <!-- Ensure that this form is being rendered and the button is visible -->
+                <form method="GET" action="/download/pdf">
+                    <input type="hidden" name="summary" value="{{ summary | safe }}">
+                    <button type="submit" class="btn btn-secondary mt-3">Download as PDF</button>
+                </form>
             </div>
         {% endif %}
 
@@ -38,7 +44,6 @@
         {% endif %}
     </div>
 
-    <!-- Move the script block to the end of the content block -->
     <script>
     document.addEventListener("DOMContentLoaded", function() {
         document.getElementById('generatorForm').addEventListener('submit', function(event) {
@@ -87,6 +92,6 @@
             });
         });
     });
-</script>
+    </script>
 
 {% endblock %}

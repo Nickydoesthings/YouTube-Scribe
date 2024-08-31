@@ -1,10 +1,13 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, send_file
 import os
 import whisper
 import yt_dlp
 import openai
 import logging
 import markdown
+from io import BytesIO
+from weasyprint import HTML
+from openai import OpenAI
 
 # Initialize the Flask application
 app = Flask(__name__)
@@ -14,88 +17,61 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Initialize the OpenAI client using the API key from environment variables
+client = OpenAI()
+
+# Set the OpenAI API key
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 def download_youtube_audio(video_url, save_path='.'):
-    """
-    Downloads the audio from a YouTube video using yt_dlp and saves it as an MP3 file.
-
-    Args:
-        video_url (str): The URL of the YouTube video.
-        save_path (str): The path where the audio file will be saved.
-
-    Returns:
-        str: The path to the downloaded MP3 file, or None if an error occurs.
-    """
     try:
         ydl_opts = {
-            'format': 'bestaudio/best',  # Download the best available audio quality
-            'outtmpl': f'{save_path}/%(title)s.%(ext)s',  # Template for output filename
+            'format': 'bestaudio/best',
+            'outtmpl': f'{save_path}/%(title)s.%(ext)s',
             'postprocessors': [{
-                'key': 'FFmpegExtractAudio',  # Extract audio using FFmpeg
-                'preferredcodec': 'mp3',  # Convert audio to MP3 format
-                'preferredquality': '192',  # Set the audio quality
+                'key': 'FFmpegExtractAudio',
+                'preferredcodec': 'mp3',
+                'preferredquality': '192',
             }],
             'postprocessor_args': [
-                '-ar', '44100'  # Set the audio sample rate
+                '-ar', '44100'
             ],
-            'prefer_ffmpeg': True,  # Prefer using FFmpeg for processing
-            'keepvideo': False,  # Do not keep the video file after extracting audio
+            'prefer_ffmpeg': True,
+            'keepvideo': False,
         }
 
-        # Download the audio using yt-dlp with the provided options
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info_dict = ydl.extract_info(video_url)  # Extract video information
-            filename = ydl.prepare_filename(info_dict)  # Prepare the filename based on the video title
-            audio_file_path = os.path.splitext(filename)[0] + ".mp3"  # Change the extension to MP3
+            info_dict = ydl.extract_info(video_url)
+            filename = ydl.prepare_filename(info_dict)
+            audio_file_path = os.path.splitext(filename)[0] + ".mp3"
         
-        return audio_file_path  # Return the path to the downloaded MP3 file
+        return audio_file_path
     except Exception as e:
-        logger.error(f"An error occurred while downloading audio: {e}")  # Log any errors that occur
-        return None  # Return None if an error occurs
+        logger.error(f"An error occurred while downloading audio: {e}")
+        return None
 
 def transcribe_audio_with_whisper(audio_file_path):
-    """
-    Transcribes audio using the Whisper model.
-
-    Args:
-        audio_file_path (str): The path to the audio file.
-
-    Returns:
-        str: The transcribed text, or None if an error occurs.
-    """
     try:
-        model = whisper.load_model("base")  # Load the Whisper model
-        result = model.transcribe(audio_file_path)  # Transcribe the audio file
-        return result['text']  # Return the transcribed text
+        model = whisper.load_model("base")
+        result = model.transcribe(audio_file_path)
+        
+        if os.path.exists(audio_file_path):
+            os.remove(audio_file_path)
+            logger.info(f"Deleted audio file: {audio_file_path}")
+        
+        return result['text']
     except Exception as e:
-        logger.error(f"An error occurred during transcription: {e}")  # Log any errors that occur
-        return None  # Return None if an error occurs
-
-from openai import OpenAI
-
-# Initialize the OpenAI client
-client = OpenAI()
-
-from openai import OpenAI
-
-# Initialize the OpenAI client
-client = OpenAI()
+        logger.error(f"An error occurred during transcription: {e}")
+        
+        if os.path.exists(audio_file_path):
+            os.remove(audio_file_path)
+            logger.info(f"Deleted audio file due to error: {audio_file_path}")
+        
+        return None
 
 def summarize_text(text):
-    """
-    Summarizes a given text using OpenAI's GPT model.
-
-    Args:
-        text (str): The text to be summarized.
-
-    Returns:
-        str: The summarized text in Markdown format, or None if an error occurs.
-    """
     try:
-        # Use the OpenAI API to generate a summary
         completion = client.chat.completions.create(
-            model="gpt-4o-mini",  # Replace with the correct model if different
+            model="gpt-4o-mini",
             messages=[
                 {"role": "system", "content": "You are a tutorial maker. You create written tutorials that are easy to follow."},
                 {
@@ -116,71 +92,62 @@ def summarize_text(text):
             ]
         )
 
-        # Access the content directly from the `message` attribute
         summary = completion.choices[0].message.content.strip()
         return summary
     except Exception as e:
         logger.error(f"An error occurred during text summarization: {e}")
-        return None  # Return None if an error occurs
-
-
-
-
+        return None
 
 @app.route('/', methods=['GET', 'POST'])
 def home():
-    error = None  # Initialize error variable to None
-    html_summary = None  # Initialize summary variable to None
+    error = None
+    html_summary = None
 
     if request.method == 'POST':
-        youtube_link = request.form.get('youtubeLink')  # Get the YouTube link from the form
+        youtube_link = request.form.get('youtubeLink')
         if not youtube_link:
-            error = "Please provide a YouTube video URL."  # Error if no URL is provided
-            return render_template('generator.html', error=error)  # Render the page with the error message
-        
+            error = "Please provide a YouTube video URL."
+            return render_template('generator.html', error=error)
+
         try:
-            audio_file_path = download_youtube_audio(youtube_link)  # Download the YouTube audio
+            audio_file_path = download_youtube_audio(youtube_link)
             if audio_file_path:
-                transcript = transcribe_audio_with_whisper(audio_file_path)  # Transcribe the audio to text
+                transcript = transcribe_audio_with_whisper(audio_file_path)
                 if transcript:
-                    summary = summarize_text(transcript)  # Summarize the transcript
+                    summary = summarize_text(transcript)
                     if summary:
-                        html_summary = markdown.markdown(summary)  # Convert the summary to HTML
+                        html_summary = markdown.markdown(summary)
                     else:
-                        error = "Failed to generate summary."  # Error if summary generation fails
+                        error = "Failed to generate summary."
                 else:
-                    error = "Failed to transcribe the audio."  # Error if transcription fails
+                    error = "Failed to transcribe the audio."
             else:
-                error = "Failed to download the YouTube audio."  # Error if audio download fails
+                error = "Failed to download the YouTube audio."
         except Exception as e:
-            logger.error(f"An unexpected error occurred: {e}")  # Log unexpected errors
-            error = f"An unexpected error occurred: {e}"  # Set the error message for the user
+            logger.error(f"An unexpected error occurred: {e}")
+            error = f"An unexpected error occurred: {e}"
 
+        return render_template('generator.html', summary=html_summary, error=error)
 
-        finally: # 'Finally' always runs, regardless of whether an exception occurred or not
-            if audio_file_path and os.path.exists(audio_file_path):
-                os.remove(audio_file_path)  # Delete the audio file once we're done with it
+    return render_template('generator.html', summary=html_summary, error=error)
 
+@app.route('/download/pdf')
+def download_pdf():
+    summary = request.args.get('summary')
+    
+    if not summary:
+        return "No summary available to download.", 400
+    
+    html_content = f"<html><body>{markdown.markdown(summary)}</body></html>"
+    pdf_file = BytesIO()
+    HTML(string=html_content).write_pdf(pdf_file)
+    pdf_file.seek(0)
 
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            # Return only the summary section as a response to the AJAX request
-            return render_template('summary_partial.html', summary=html_summary, error=error)
-        else:
-            return render_template('generator.html', summary=html_summary, error=error)  # Render the page with the summary or error message
-
-    return render_template('generator.html', summary=html_summary, error=error)  # Render the page for GET requests
-
+    return send_file(pdf_file, as_attachment=True, download_name="summary.pdf")
 
 @app.route('/about')
 def about():
-    """
-    Handles the about route, rendering a simple 'About' page.
-
-    Returns:
-        str: The rendered HTML page for the 'About' section.
-    """
     return render_template('about.html')
 
 if __name__ == '__main__':
-    # Run the Flask application in debug mode
     app.run(debug=True)

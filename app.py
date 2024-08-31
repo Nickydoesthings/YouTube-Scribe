@@ -77,17 +77,35 @@ def summarize_text(text):
                 {
                     "role": "user",
                     "content": f"""
-                    This is an audio transcript of a tutorial or DIY project. 
-                    Make a written tutorial in Markdown based off this audio transcript. 
-                    Start with a summary and list out what the user will need (if relevant) - 
-                    then list out the steps they should take. 
-                    Please use Markdown syntax, with headers for sections, ordered lists for steps, 
-                    and appropriate spacing for readability. Assume the reader has only basic knowledge of the subject at hand. 
-                    Don't include links unless necessary.
+                    This is an audio transcript of a tutorial or DIY project. Please create a detailed, structured written tutorial in Markdown format based on this transcript. 
 
-                    Transcript:
+                    **Structure**:
+                    1. **Summary**: Start with a brief summary of the tutorial. Summarize the goal and the key steps involved.
+                    2. **What You Will Need**: List all the materials, tools, or prerequisites the user will need. Use bullet points.
+                    3. **Step-by-Step Instructions**: Break down the process into clear, ordered steps. Use headers (### Step 1: ..., ### Step 2: ...) and ordered lists where appropriate.
+                        - Include sub-steps if necessary.
+                        - Use bullet points for additional notes or tips.
+                    4. **Additional Notes**: If applicable, include a section for tips, common issues, or additional resources.
+
+                    **Markdown Syntax**:
+                    - Use `#` for main sections (e.g., Summary, What You Will Need).
+                    - Use `##` for major steps or sections within the tutorial.
+                    - Use `###` for sub-steps.
+                    - Use bullet points for lists and additional tips or notes.
+
+                    **Tone and Language**:
+                    - Write in a clear, concise, and friendly tone.
+                    - Assume the reader has only basic knowledge of the subject, and provide explanations where necessary.
+
+                    **Handling Non-Essential Content**:
+                    - Exclude any non-instructive content such as jokes, personal anecdotes, or irrelevant tangents from the final tutorial.
+
+                    **Error Handling**:
+                    - If a part of the transcript is unclear or seems incorrect, indicate this in the tutorial with a note (e.g., `[Note: This part of the audio was unclear]`).
+
+                    **Transcript**:
                     {text}
-                    """
+                    """     
                 }
             ]
         )

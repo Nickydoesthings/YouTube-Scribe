@@ -4,7 +4,7 @@
     <h1>YouTube Scribe</h1>
     <p>Enter a YouTube video URL to generate a written tutorial summary:</p>
 
-    <form id="generatorForm" action="/" method="POST">
+    <form id="generatorForm" action="/" method="POST" style="margin-top: 20px;">
         <!-- Form for submitting YouTube link -->
         <div class="form-group">
             <label for="youtubeLink">YouTube Video URL:</label>
@@ -28,7 +28,6 @@
                     {{ summary | safe }}  <!-- Render the Markdown content as HTML -->
                 </div>
                 <!-- Button to download the summary as a PDF -->
-                <!-- Ensure that this form is being rendered and the button is visible -->
                 <form method="GET" action="/download/pdf">
                     <input type="hidden" name="summary" value="{{ summary | safe }}">
                     <button type="submit" class="btn btn-secondary mt-3">Download as PDF</button>

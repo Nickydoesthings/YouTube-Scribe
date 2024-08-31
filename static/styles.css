@@ -192,3 +192,28 @@ h1 {
     margin-top: 20px;
     color: #343a40;
 }
+
+.flashes {
+    margin: 10px 0;
+}
+
+.alert {
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    color: white;
+    background-color: red; /* Default color for alerts */
+}
+
+.alert-danger {
+    background-color: #ff4d4d; /* Specific color for 'danger' alerts */
+}
+
+.btn-danger {
+    background-color: #d9534f;
+}
+
+.logout-form {
+    display: inline;
+    margin-left: auto; /* Pushes the signout button to the right */
+}

@@ -21,7 +21,7 @@ body {
     font-weight: bold;
 }
 
-.navbar a:hover {
+.navbar a:hover, .landing-cta .landing-signup-btn:hover {
     text-decoration: underline;
 }
 
@@ -38,13 +38,19 @@ body {
 }
 
 /* Header styling */
-h1 {
+h1, .features-title {
     font-size: 2rem;
     margin-bottom: 20px;
     color: #343a40;
+    text-transform: uppercase;
+    text-align: center;
 }
 
-/* Form label styling */
+/* Form and Input styling */
+.form-group {
+    margin-bottom: 15px;
+}
+
 .form-group label {
     font-weight: bold;
     color: #495057;
@@ -53,27 +59,38 @@ h1 {
     text-align: left;
 }
 
-/* Input field styling */
-.form-control {
+.form-group input, .form-control {
     width: 100%;
     padding: 10px;
     margin-bottom: 20px;
-    border: 1px solid #ced4da;
-    border-radius: 4px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
     background-color: #ffffff;
     color: #212529;
     font-size: 16px;
 }
 
-/* Submit button styling */
+/* Button styling */
+.btn {
+    font-size: 1.2em;
+    padding: 10px 20px;
+    border-radius: 10px;
+    margin-top: 20px;
+    margin-bottom: 10px;
+    text-align: center;
+    cursor: pointer;
+}
+
+.btn-block {
+    display: block;
+    width: 100%;
+}
+
 .btn-primary {
     background-color: #007bff;
     border: 1px solid #007bff;
     color: #ffffff;
-    padding: 10px 20px;
     font-weight: bold;
-    border-radius: 4px;
-    cursor: pointer;
 }
 
 .btn-primary:hover {
@@ -85,12 +102,8 @@ h1 {
     background-color: #6c757d;
     border: 1px solid #6c757d;
     color: #ffffff;
-    padding: 10px 20px;
     font-weight: bold;
-    border-radius: 4px;
-    cursor: pointer;
-    display: inline-block;
-    margin-top: 15px; /* To add some space above the button */
+    margin-top: 15px;
 }
 
 .btn-secondary:hover {
@@ -98,17 +111,31 @@ h1 {
     border-color: #545b62;
 }
 
-/* Video title styling */
-.video-title {
-    margin-top: 20px;
-    font-size: 1.5rem;
-    color: #343a40;
-    text-align: left;
+/* Alerts and Messages */
+.flashes {
+    margin: 10px 0;
 }
 
-/* Loading spinner styling */
+.alert {
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    color: white;
+    background-color: red; /* Default color for alerts */
+}
+
+.alert-danger {
+    background-color: #ff4d4d; /* Specific color for 'danger' alerts */
+}
+
+/* Logout Form */
+.logout-form {
+    display: inline;
+    margin-left: auto; /* Pushes the sign-out button to the right */
+}
+
+/* Loading spinner and text */
 .loading-spinner {
-    /* display: none; */
     margin: 20px auto;
     border: 8px solid #f3f3f3;
     border-top: 8px solid #007bff;
@@ -118,7 +145,6 @@ h1 {
     animation: spin 2s linear infinite;
     z-index: 9999;
     position: relative;
-
 }
 
 @keyframes spin {
@@ -126,24 +152,21 @@ h1 {
     100% { transform: rotate(360deg); }
 }
 
-/* Loading text styling */
 .loading-text {
-    /* display: none; */
     margin-top: 10px;
     font-size: 1rem;
     color: #343a40;
     z-index: 9999;
     position: relative;
-
 }
 
-/* Error message styling */
+/* Error messages */
 .error-message {
     color: red;
     margin-top: 20px;
 }
 
-/* Summary output styling */
+/* Summary output */
 .summary-output {
     text-align: left;
     margin-top: 20px;
@@ -165,14 +188,13 @@ h1 {
     border: 1px solid #ced4da;
 }
 
-/* New styles for tutorial content */
+/* Tutorial content */
 .tutorial-content {
     line-height: 1.6;
     font-size: 16px;
     color: #495057;
 }
 
-/* List styling for ordered and unordered lists */
 .tutorial-content ol, .tutorial-content ul {
     margin: 20px 0;
     padding-left: 40px;
@@ -182,38 +204,125 @@ h1 {
     margin-bottom: 10px;
 }
 
-/* Styling for paragraph text within tutorial content */
 .tutorial-content p {
     margin-bottom: 15px;
 }
 
-/* Additional heading levels */
 .tutorial-content h3, .tutorial-content h4 {
     margin-top: 20px;
     color: #343a40;
 }
 
-.flashes {
-    margin: 10px 0;
+/* Landing page styling */
+.landing-page {
+    max-width: 800px;
+    margin: 0 auto;
+    text-align: center;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.1);
 }
 
-.alert {
-    padding: 10px;
+.landing-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #343a40;
     margin-bottom: 10px;
+}
+
+.landing-subtitle {
+    font-size: 1.2rem;
+    color: #6c757d;
+    margin-bottom: 20px;
+}
+
+.landing-cta {
+    padding-top: 10px;
+}
+
+.landing-cta .landing-signup-btn {
+    font-size: 1.5rem;
+    padding: 15px 30px;
+    color: #fff;
+    background-color: #007bff;
+    border: none;
     border-radius: 5px;
-    color: white;
-    background-color: red; /* Default color for alerts */
+    text-transform: uppercase;
+    text-decoration: none;
+    box-shadow: 0px 4px 10px rgba(0, 123, 255, 0.4);
+    transition: background-color 0.3s ease;
 }
 
-.alert-danger {
-    background-color: #ff4d4d; /* Specific color for 'danger' alerts */
+.landing-cta .landing-signup-btn:hover {
+    background-color: #0056b3;
 }
 
-.btn-danger {
-    background-color: #d9534f;
+.landing-divider {
+    margin: 40px 0;
+    border-top: 1px solid #dee2e6;
 }
 
-.logout-form {
-    display: inline;
-    margin-left: auto; /* Pushes the signout button to the right */
+.landing-features {
+    margin-top: 40px;
+    text-align: left;
+}
+
+.features-title {
+    font-size: 2rem;
+    color: #343a40;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+    text-align: center;
+}
+
+.feature-item {
+    display: flex;
+    align-items: center;
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+.feature-icon {
+    width: 50px;
+    height: 50px;
+    margin-right: 20px;
+    fill: #007bff;
+}
+
+.feature-text {
+    font-size: 1.2rem;
+    color: #495057;
+    line-height: 1.6;
+}
+
+/* About page styling */
+.about-section {
+    background: linear-gradient(to bottom right, #f8f9fa, #e9ecef);
+    padding: 20px;
+    margin-bottom: 20px;
+    border: 1px solid #b5bcc1;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    text-align: left;
+}
+
+.about-section p {
+    margin: 0;
+    font-size: 1.1rem;
+    line-height: 1.4;
+    color: #495057;
+    text-indent: 20px;
+    padding: 5px 5px; 
+}
+
+h1 {
+    margin-bottom: 30px;
+    color: #343a40;
+    text-align: center;
+    font-size: 2.5rem; 
+    font-weight: 700; 
 }

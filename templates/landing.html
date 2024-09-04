@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="landing-page">
+    <div class="landing-header">
+        <h1 class="landing-title">Welcome to YouTube Scribe</h1>
+        <p class="landing-subtitle">Your go-to tool for converting YouTube tutorials into easy-to-follow written guides.</p>
+    </div>
+    
+    <div class="landing-cta">
+        <a href="{{ url_for('signup') }}" class="btn btn-primary btn-large landing-signup-btn">Get Started For Free</a>
+    </div>
+    
+    <div class="landing-divider"></div> <!-- Divider between sections -->
+
+    <div class="landing-features">
+        <h2 class="features-title">Why Use YouTube Scribe?</h2>
+        <div class="feature-item">
+            <img src="{{ url_for('static', filename='images/clock.svg') }}" alt="Clock" class="feature-icon">
+            <div class="feature-text">
+                <strong>Save Time:</strong> Don't waste time with long-winded videos. Get a concise, written summary in seconds.
+            </div>
+        </div>
+        <div class="feature-item">
+            <img src="{{ url_for('static', filename='images/task-list.svg') }}" alt="Step-by-Step" class="feature-icon">
+            <div class="feature-text">
+                <strong>Step-by-Step Guides:</strong> Follow clear, structured tutorials tailored from video content.
+            </div>
+        </div>
+        <div class="feature-item">
+            <img src="{{ url_for('static', filename='images/pdf.svg') }}" alt="PDF" class="feature-icon">
+            <div class="feature-text">
+                <strong>Access Anywhere:</strong> Download summaries as PDFs and use them offline.
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

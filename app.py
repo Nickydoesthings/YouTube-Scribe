@@ -133,8 +133,10 @@ def logout():
 
 # Home route that requires login
 @app.route('/', methods=['GET', 'POST'])
-@login_required
 def home():
+    if not current_user.is_authenticated:
+        return redirect(url_for('landing'))
+
     error = None
     html_summary = None
 
@@ -168,6 +170,11 @@ def home():
         return render_template('generator.html', summary=html_summary, error=error)
 
     return render_template('generator.html', summary=html_summary, error=error)
+
+@app.route('/landing')
+def landing():
+    return render_template('landing.html')
+
 
 @app.route('/download/pdf')
 @login_required

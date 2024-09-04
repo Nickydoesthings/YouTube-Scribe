@@ -4,25 +4,54 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>YouTube Scribe</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <nav class="navbar">
-        <a href="{{ url_for('home') }}">Generator</a>
-        <a href="{{ url_for('about') }}">About</a>
-        {% if current_user.is_authenticated %}
-            <form method="POST" action="{{ url_for('logout') }}" class="logout-form">
-                <button type="submit" class="btn btn-primary">Sign Out</button>
-            </form>
-        {% else %}
-            <a href="{{ url_for('login') }}">Login/Sign Up</a>
-        {% endif %}
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <a class="navbar-brand" href="{{ url_for('home') }}">YouTube Scribe</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('home') }}">Generator</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('about') }}">About</a>
+                </li>
+                {% if current_user.is_authenticated %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('logout') }}">Log Out</a>
+                </li>
+                {% else %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('login') }}">Login/Sign Up</a>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
     </nav>
 
     <div class="container">
         {% block content %}{% endblock %}
     </div>
 
-    <!-- Optional: Include your custom JavaScript or Bootstrap JS -->
+    <footer>
+        <p>YouTube Scribe</p>
+    </footer>
+
+    <!-- Optional: Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.1/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
 </html>

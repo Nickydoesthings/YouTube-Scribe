@@ -119,9 +119,9 @@ h1, .features-title {
 .alert {
     padding: 10px;
     margin-bottom: 10px;
-    border-radius: 5px;
+    border-radius: 10px;
     color: white;
-    background-color: red; /* Default color for alerts */
+    background-color: darkred; /* Default color for alerts */
 }
 
 .alert-danger {
@@ -319,10 +319,37 @@ h1, .features-title {
     padding: 5px 5px; 
 }
 
-h1 {
-    margin-bottom: 30px;
-    color: #343a40;
+/* Additional Styles */
+/* Hero Section */
+.hero-section {
     text-align: center;
-    font-size: 2.5rem; 
-    font-weight: 700; 
+    margin: 40px 0;
 }
+
+.hero-section h1 {
+    font-size: 3rem;
+    color: #343a40;
+}
+
+.hero-section p {
+    font-size: 1.25rem;
+    color: #6c757d;
+    margin-bottom: 20px;
+}
+
+/* CTA Button */
+.btn-cta {
+    font-size: 1.25rem;
+    padding: 10px 20px;
+}
+
+/* Footer Styling */
+footer {
+    background-color: #343a40;
+    color: white;
+    text-align: center;
+    padding: 15px 0;
+    margin-top: 50px;
+}
+
+

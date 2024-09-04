@@ -196,6 +196,17 @@ h1, .features-title {
     border-radius: 5px;
 }
 
+.summary-output-container {
+    max-width: 800px;
+    margin: 50px auto;
+    padding: 20px;
+    background-color: #ffffff;
+    border: 1px solid #ced4da;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    text-align: left;
+}
+
 .summary-output h2 {
     color: #343a40;
 }

@@ -131,49 +131,47 @@ def logout():
     flash('You have been logged out.', 'success')
     return redirect(url_for('login'))
 
-# Home route that requires login
 @app.route('/', methods=['GET', 'POST'])
-def home():
-    if not current_user.is_authenticated:
-        return redirect(url_for('landing'))
+def landing():
+    if request.method == 'POST':
+        youtube_link = request.form.get('youtubeLink')
+        return redirect(url_for('home') + f"?youtubeLink={youtube_link}")
+    return render_template('landing.html')
 
+@app.route('/generator', methods=['GET', 'POST'])
+def generator():
     error = None
     html_summary = None
+    youtube_link = request.args.get('youtubeLink', '')  # Retrieve YouTube link from query params (for GET request)
 
     if request.method == 'POST':
         youtube_link = request.form.get('youtubeLink')
         if not youtube_link:
             error = "Please provide a YouTube video URL."
-            return render_template('generator.html', error=error)
-
-        try:
-            audio_file_path = download_youtube_audio(youtube_link)
-            if audio_file_path:
-                transcript = transcribe_audio_with_whisper(audio_file_path)
-                if transcript:
-                    summary = summarize_text(transcript)
-                    if summary:
-                        html_summary = markdown.markdown(summary)
-                        # Increment usage count
-                        current_user.usage_count += 1
-                        db.session.commit()
+        else:
+            try:
+                audio_file_path = download_youtube_audio(youtube_link)
+                if audio_file_path:
+                    transcript = transcribe_audio_with_whisper(audio_file_path)
+                    if transcript:
+                        summary = summarize_text(transcript)
+                        if summary:
+                            html_summary = markdown.markdown(summary)
+                            if current_user.is_authenticated:
+                                current_user.usage_count += 1
+                                db.session.commit()
+                        else:
+                            error = "Failed to generate summary."
                     else:
-                        error = "Failed to generate summary."
+                        error = "Failed to transcribe the audio."
                 else:
-                    error = "Failed to transcribe the audio."
-            else:
-                error = "Failed to download the YouTube audio."
-        except Exception as e:
-            logger.error(f"An unexpected error occurred: {e}")
-            error = f"An unexpected error occurred: {e}"
+                    error = "Failed to download the YouTube audio."
+            except Exception as e:
+                logger.error(f"An unexpected error occurred: {e}")
+                error = f"An unexpected error occurred: {e}"
 
-        return render_template('generator.html', summary=html_summary, error=error)
+    return render_template('generator.html', summary=html_summary, error=error, youtube_link=youtube_link)
 
-    return render_template('generator.html', summary=html_summary, error=error)
-
-@app.route('/landing')
-def landing():
-    return render_template('landing.html')
 
 
 @app.route('/download/pdf')

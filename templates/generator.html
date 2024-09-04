@@ -4,15 +4,13 @@
 
 {% block content %}
 
-    <!-- Hero Section -->
     <div class="hero-section">
         <div class="hero-content">
             <h1 class="hero-title">YouTube -> Written Instructions</h1>
             <p class="hero-subtitle">Cut through the noise. Get right to the important details.</p>
             <div class="hero-search">
-                <form id="generatorForm" action="/" method="POST">
-                    <!-- Input field for the YouTube URL with styling similar to landing page -->
-                    <input type="url" name="youtubeLink" id="youtubeLink" placeholder="Paste YouTube URL here" class="hero-input" required>
+                <form id="generatorForm" action="{{ url_for('generator') }}" method="POST">
+                    <input type="url" name="youtubeLink" id="youtubeLink" value="{{ request.args.get('youtubeLink', '') }}" placeholder="Paste YouTube URL here" class="hero-input" required>
                     <button type="submit" class="hero-btn">
                         <img src="{{ url_for('static', filename='images/search.svg') }}" alt="Submit" class="search-icon">
                     </button>
@@ -27,25 +25,23 @@
         <div id="loadingText" class="loading-text">Analyzing...</div>
     </div>
 
-    <!-- Result Section -->
     <div id="resultContainer" style="margin-top: 30px;">
         {% if summary %}
-            <!-- If a summary is generated, display it here -->
-            <div class="summary-output">
-                <h2>Generated Tutorial Summary:</h2>
+            <!-- Container for the generated summary with some styling -->
+            <div class="summary-output-container" style="border: 1px solid #ccc; border-radius: 8px; padding: 20px; background-color: #f9f9f9;">
                 <div class="tutorial-content">
                     {{ summary | safe }} <!-- Render the Markdown content as HTML -->
                 </div>
                 <!-- Button to download the summary as a PDF -->
                 <form method="GET" action="/download/pdf">
-                    <input type="hidden" name="summary" value="{{ summary | safe }}">
+                    <input type="url" name="youtubeLink" id="youtubeLink" value="{{ request.args.get('youtubeLink', '') }}" placeholder="Paste YouTube URL here" class="hero-input" required>
+
                     <button type="submit" class="btn btn-secondary mt-3">Download as PDF</button>
                 </form>
             </div>
         {% endif %}
 
         {% if error %}
-            <!-- If there's an error, display it here -->
             <div class="alert alert-danger mt-3">
                 <strong>Error:</strong> {{ error }}
             </div>
@@ -54,50 +50,27 @@
 
     <!-- JavaScript to handle form submission and loading spinner -->
     <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        document.getElementById('generatorForm').addEventListener('submit', function(event) {
-            event.preventDefault(); // Prevent the form from submitting traditionally
+        document.addEventListener("DOMContentLoaded", function() {
+            const form = document.getElementById('generatorForm');
+            const youtubeLink = document.getElementById('youtubeLink').value;
 
-            // Show the spinner and the "Analyzing..." text when the form is submitted
-            document.getElementById('loadingContainer').style.display = 'block';
+            // Function to show the loading spinner
+            function showLoadingSpinner() {
+                document.getElementById('loadingContainer').style.display = 'block';
+            }
 
-            // Collect the form data
-            const formData = new FormData(this);
+            // Check if there's a YouTube link (redirect from landing page) and auto-submit the form
+            if (youtubeLink) {
+                showLoadingSpinner();  // Show spinner before auto-submit
+                form.submit();
+            }
 
-            // Perform the AJAX request
-            fetch('/', {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-            .then(response => response.text())
-            .then(data => {
-                // Hide the spinner and loading text
-                document.getElementById('loadingContainer').style.display = 'none';
-
-                // Update only the summary section
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(data, 'text/html');
-                const newSummary = doc.querySelector('.summary-output');
-                const resultContainer = document.getElementById('resultContainer');
-
-                // Clear the previous content
-                resultContainer.innerHTML = '';
-
-                // Append the new summary content
-                if (newSummary) {
-                    resultContainer.appendChild(newSummary);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                document.getElementById('loadingContainer').style.display = 'none';
-                document.getElementById('resultContainer').innerHTML = '<div class="alert alert-danger mt-3"><strong>Error:</strong> Something went wrong. Please try again later.</div>';
+            // Add the event listener for manual submission to also show the spinner
+            form.addEventListener('submit', function(event) {
+                showLoadingSpinner();  // Show spinner for manual submission
             });
         });
-    });
     </script>
 
 {% endblock %}
+

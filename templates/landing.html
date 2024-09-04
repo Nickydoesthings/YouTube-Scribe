@@ -8,9 +8,10 @@
         <div class="hero-content">
             <h1 class="hero-title">Convert tutorial videos to written instructions instantly</h1>
             <p class="hero-subtitle">Paste the video URL below and instantly get step-by-step instructions.</p>
+            <p class="hero-subtitle">It's Free!</p>
             <div class="hero-search">
-                <form action="{{ url_for('home') }}" method="POST">
-                    <input type="text" name="youtubeLink" placeholder="Paste YouTube URL here" class="hero-input">
+                <form action="{{ url_for('generator') }}" method="GET">
+                    <input type="text" name="youtubeLink" placeholder="Paste YouTube URL here" class="hero-input" required>
                     <button type="submit" class="hero-btn">
                         <img src="{{ url_for('static', filename='images/search.svg') }}" alt="Submit" class="search-icon">
                     </button>

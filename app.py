@@ -5,7 +5,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import DataRequired, Email, EqualTo, Length
-from flask_migrate import Migrate  # Import Flask-Migrate
+from flask_migrate import Migrate
 import os
 import whisper
 import yt_dlp

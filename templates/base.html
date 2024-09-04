@@ -41,7 +41,7 @@
         </div>
     </nav>
 
-    <div class="container">
+    <div class="{% if not no_container %}container{% endif %}">
         {% block content %}{% endblock %}
     </div>
 

@@ -1,24 +1,35 @@
 {% extends "base.html" %}
 
-{% block content %}
-<div class="landing-page">
-    <div class="landing-header">
-        <h1 class="landing-title">Welcome to YouTube Scribe</h1>
-        <p class="landing-subtitle">Your go-to tool for converting YouTube tutorials into easy-to-follow written guides.</p>
-    </div>
-    
-    <div class="landing-cta">
-        <a href="{{ url_for('signup') }}" class="btn btn-primary btn-large landing-signup-btn">Get Started For Free</a>
-    </div>
-    
-    <div class="landing-divider"></div> <!-- Divider between sections -->
+{% set no_container = True %}
 
+{% block content %}
+
+    <div class="hero-section">
+        <div class="hero-content">
+            <h1 class="hero-title">Convert tutorial videos to written instructions instantly</h1>
+            <p class="hero-subtitle">Paste the video URL below and instantly get step-by-step instructions.</p>
+            <div class="hero-search">
+                <form action="{{ url_for('home') }}" method="POST">
+                    <input type="text" name="youtubeLink" placeholder="Paste YouTube URL here" class="hero-input">
+                    <button type="submit" class="hero-btn">
+                        <img src="{{ url_for('static', filename='images/search.svg') }}" alt="Submit" class="search-icon">
+                    </button>
+                </form>
+            </div>
+            <div class="hero-links">
+                <a href="#" class="hero-link">See an example</a>
+                <a href="#" class="hero-link">FAQs</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features Section -->
     <div class="landing-features">
         <h2 class="features-title">Why Use YouTube Scribe?</h2>
         <div class="feature-item">
             <img src="{{ url_for('static', filename='images/clock.svg') }}" alt="Clock" class="feature-icon">
             <div class="feature-text">
-                <strong>Save Time:</strong> Don't waste time with long-winded videos. Get a concise, written summary in seconds.
+                <strong>Save Time:</strong> Don't waste time with lengthy, long-winded tutorial videos. Get a set of written instructions in just seconds.
             </div>
         </div>
         <div class="feature-item">
@@ -34,5 +45,4 @@
             </div>
         </div>
     </div>
-</div>
 {% endblock %}

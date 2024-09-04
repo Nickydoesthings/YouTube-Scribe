@@ -1,31 +1,40 @@
 {% extends "base.html" %}
 
+{% set no_container = True %}
+
 {% block content %}
-    <h1>YouTube Scribe</h1>
-    <p>Enter a YouTube video URL to generate a written tutorial summary:</p>
 
-    <form id="generatorForm" action="/" method="POST" style="margin-top: 20px;">
-        <!-- Form for submitting YouTube link -->
-        <div class="form-group">
-            <label for="youtubeLink">YouTube Video URL:</label>
-            <!-- Input field for the YouTube URL -->
-            <input type="url" class="form-control" id="youtubeLink" name="youtubeLink" placeholder="https://www.youtube.com/watch?v=example" required>
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="hero-content">
+            <h1 class="hero-title">YouTube -> Written Instructions</h1>
+            <p class="hero-subtitle">Cut through the noise. Get right to the important details.</p>
+            <div class="hero-search">
+                <form id="generatorForm" action="/" method="POST">
+                    <!-- Input field for the YouTube URL with styling similar to landing page -->
+                    <input type="url" name="youtubeLink" id="youtubeLink" placeholder="Paste YouTube URL here" class="hero-input" required>
+                    <button type="submit" class="hero-btn">
+                        <img src="{{ url_for('static', filename='images/search.svg') }}" alt="Submit" class="search-icon">
+                    </button>
+                </form>
+            </div>
         </div>
-        <!-- Submit button -->
-        <button type="submit" class="btn btn-primary">Submit</button>
-    </form>
+    </div>
 
-    <!-- Loading Spinner (hidden by default) -->
-    <div id="loadingSpinner" class="loading-spinner" style="display:none;"></div>
-    <div id="loadingText" class="loading-text" style="display:none;">Analyzing...</div>
+    <!-- Loading Spinner and Text Container -->
+    <div id="loadingContainer" class="loading-container" style="display: none; text-align: center; margin-top: 20px;">
+        <div id="loadingSpinner" class="loading-spinner"></div>
+        <div id="loadingText" class="loading-text">Analyzing...</div>
+    </div>
 
-    <div id="resultContainer">
+    <!-- Result Section -->
+    <div id="resultContainer" style="margin-top: 30px;">
         {% if summary %}
             <!-- If a summary is generated, display it here -->
             <div class="summary-output">
                 <h2>Generated Tutorial Summary:</h2>
                 <div class="tutorial-content">
-                    {{ summary | safe }}  <!-- Render the Markdown content as HTML -->
+                    {{ summary | safe }} <!-- Render the Markdown content as HTML -->
                 </div>
                 <!-- Button to download the summary as a PDF -->
                 <form method="GET" action="/download/pdf">
@@ -43,14 +52,14 @@
         {% endif %}
     </div>
 
+    <!-- JavaScript to handle form submission and loading spinner -->
     <script>
     document.addEventListener("DOMContentLoaded", function() {
         document.getElementById('generatorForm').addEventListener('submit', function(event) {
-            event.preventDefault(); // Prevent the form from submitting the traditional way
-            
+            event.preventDefault(); // Prevent the form from submitting traditionally
+
             // Show the spinner and the "Analyzing..." text when the form is submitted
-            document.getElementById('loadingSpinner').style.display = 'block';
-            document.getElementById('loadingText').style.display = 'block';
+            document.getElementById('loadingContainer').style.display = 'block';
 
             // Collect the form data
             const formData = new FormData(this);
@@ -66,8 +75,7 @@
             .then(response => response.text())
             .then(data => {
                 // Hide the spinner and loading text
-                document.getElementById('loadingSpinner').style.display = 'none';
-                document.getElementById('loadingText').style.display = 'none';
+                document.getElementById('loadingContainer').style.display = 'none';
 
                 // Update only the summary section
                 const parser = new DOMParser();
@@ -85,8 +93,7 @@
             })
             .catch(error => {
                 console.error('Error:', error);
-                document.getElementById('loadingSpinner').style.display = 'none';
-                document.getElementById('loadingText').style.display = 'none';
+                document.getElementById('loadingContainer').style.display = 'none';
                 document.getElementById('resultContainer').innerHTML = '<div class="alert alert-danger mt-3"><strong>Error:</strong> Something went wrong. Please try again later.</div>';
             });
         });

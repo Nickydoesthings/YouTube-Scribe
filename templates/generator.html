@@ -34,8 +34,7 @@
                 </div>
                 <!-- Button to download the summary as a PDF -->
                 <form method="GET" action="/download/pdf">
-                    <input type="url" name="youtubeLink" id="youtubeLink" value="{{ request.args.get('youtubeLink', '') }}" placeholder="Paste YouTube URL here" class="hero-input" required>
-
+                    <input type="hidden" name="youtubeLink" value="{{ request.args.get('youtubeLink', '') }}">
                     <button type="submit" class="btn btn-secondary mt-3">Download as PDF</button>
                 </form>
             </div>

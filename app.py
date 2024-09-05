@@ -143,34 +143,42 @@ def generator():
     error = None
     html_summary = None
     youtube_link = request.args.get('youtubeLink', '')  # Retrieve YouTube link from query params (for GET request)
+    video_title = None
+    thumbnail_url = None
 
     if request.method == 'POST':
         youtube_link = request.form.get('youtubeLink')
         if not youtube_link:
             error = "Please provide a YouTube video URL."
         else:
+            # Fetch video metadata (title and thumbnail)
+            audio_file_path, video_title, thumbnail_url = download_youtube_audio(youtube_link)
+
+            if not video_title or not thumbnail_url:
+                error = "Failed to fetch video metadata."
+                return render_template('generator.html', error=error, youtube_link=youtube_link)
+            
+            # Proceed with summary generation
             try:
-                audio_file_path = download_youtube_audio(youtube_link)
-                if audio_file_path:
-                    transcript = transcribe_audio_with_whisper(audio_file_path)
-                    if transcript:
-                        summary = summarize_text(transcript)
-                        if summary:
-                            html_summary = markdown.markdown(summary)
-                            if current_user.is_authenticated:
-                                current_user.usage_count += 1
-                                db.session.commit()
-                        else:
-                            error = "Failed to generate summary."
+                transcript = transcribe_audio_with_whisper(audio_file_path)
+                if transcript:
+                    summary = summarize_text(transcript)
+                    if summary:
+                        html_summary = markdown.markdown(summary)
+                        if current_user.is_authenticated:
+                            current_user.usage_count += 1
+                            db.session.commit()
                     else:
-                        error = "Failed to transcribe the audio."
+                        error = "Failed to generate summary."
                 else:
-                    error = "Failed to download the YouTube audio."
+                    error = "Failed to transcribe the audio."
             except Exception as e:
                 logger.error(f"An unexpected error occurred: {e}")
                 error = f"An unexpected error occurred: {e}"
 
-    return render_template('generator.html', summary=html_summary, error=error, youtube_link=youtube_link)
+    # Pass video title and thumbnail to the template
+    return render_template('generator.html', summary=html_summary, error=error, youtube_link=youtube_link, video_title=video_title, thumbnail_url=thumbnail_url)
+
 
 
 
@@ -192,6 +200,30 @@ def download_pdf():
 @app.route('/about')
 def about():
     return render_template('about.html')
+
+@app.route('/fetch_metadata', methods=['POST'])
+def fetch_metadata():
+    youtube_link = request.json.get('youtubeLink')
+    
+    if not youtube_link:
+        return jsonify({'error': 'No YouTube link provided.'}), 400
+
+    try:
+        # Fetch video metadata (title and thumbnail)
+        _, video_title, thumbnail_url = download_youtube_audio(youtube_link)
+
+        if not video_title or not thumbnail_url:
+            return jsonify({'error': 'Failed to fetch video metadata.'}), 500
+
+        return jsonify({
+            'video_title': video_title,
+            'thumbnail_url': thumbnail_url
+        }), 200
+
+    except Exception as e:
+        logger.error(f"An error occurred while fetching metadata: {e}")
+        return jsonify({'error': 'An unexpected error occurred.'}), 500
+
 
 # Function to download YouTube audio
 def download_youtube_audio(video_url, save_path='.'):
@@ -215,11 +247,13 @@ def download_youtube_audio(video_url, save_path='.'):
             info_dict = ydl.extract_info(video_url)
             filename = ydl.prepare_filename(info_dict)
             audio_file_path = os.path.splitext(filename)[0] + ".mp3"
-        
-        return audio_file_path
+            video_title = info_dict.get('title', 'Unknown Title')
+            thumbnail_url = info_dict.get('thumbnail', '')
+
+        return audio_file_path, video_title, thumbnail_url
     except Exception as e:
         logger.error(f"An error occurred while downloading audio: {e}")
-        return None
+        return None, None, None
 
 # Function to transcribe audio with Whisper
 def transcribe_audio_with_whisper(audio_file_path):

@@ -20,9 +20,20 @@
     </div>
 
     <!-- Loading Spinner and Text Container -->
-    <div id="loadingContainer" class="loading-container" style="display: none; text-align: center; margin-top: 20px;">
-        <div id="loadingSpinner" class="loading-spinner"></div>
-        <div id="loadingText" class="loading-text">Analyzing...</div>
+    <div id="loadingContainer" class="loading-container" style="text-align: center; margin-top: 20px;">
+        <div id="loadingSpinner" class="loading-spinner" style="display: none;"></div>
+        <div id="loadingText" class="loading-text" style="display: none;">Analyzing...</div>
+    </div>
+
+    <!-- Video Title and Thumbnail -->
+    <div class="video-details" id="videoDetails" style="text-align: center; margin-top: 20px; {% if not video_title and not thumbnail_url %} display: none; {% endif %}">
+        <div class="thumbnail-container" style="display: inline-block; max-width: 30%; margin: 0 auto; border: 2px solid #ccc; border-radius: 8px; padding: 5px;">
+            <!-- Display the actual thumbnail if available, otherwise show placeholder -->
+            <img class="video-thumbnail" id="videoThumbnail" src="{{ thumbnail_url if thumbnail_url else url_for('static', filename='images/default-video-thumbnail.png') }}" alt="Video Thumbnail" style="width: 100%; height: auto; border-radius: 8px;">
+        </div>
+        <div class="video-title" id="videoTitle" style="font-size: 1.5rem; margin-top: 10px;">
+            {{ video_title if video_title else "" }}
+        </div>
     </div>
 
     <div id="resultContainer" style="margin-top: 30px;">
@@ -47,29 +58,81 @@
         {% endif %}
     </div>
 
-    <!-- JavaScript to handle form submission and loading spinner -->
+    <!-- JavaScript to handle form submission, video metadata fetch, and loading spinner -->
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             const form = document.getElementById('generatorForm');
-            const youtubeLink = document.getElementById('youtubeLink').value;
+            const youtubeLinkInput = document.getElementById('youtubeLink');
+            const loadingText = document.getElementById('loadingText');
+            const loadingContainer = document.getElementById('loadingContainer');
+            const videoThumbnail = document.getElementById('videoThumbnail');
+            const videoDetails = document.getElementById('videoDetails');
 
-            // Function to show the loading spinner
+            // Function to show the loading spinner and analyzing text
             function showLoadingSpinner() {
-                document.getElementById('loadingContainer').style.display = 'block';
+                document.getElementById('loadingSpinner').style.display = 'block';
+                loadingText.style.display = 'block'; // Ensure "Analyzing..." is displayed with spinner
+                loadingContainer.style.display = 'block';
             }
 
-            // Check if there's a YouTube link (redirect from landing page) and auto-submit the form
+            // Function to hide loading spinner and analyzing text
+            function hideLoadingSpinner() {
+                document.getElementById('loadingSpinner').style.display = 'none';
+                loadingText.style.display = 'none'; // Hide "Analyzing..." with the spinner
+            }
+
+            // Function to display video metadata (including thumbnail)
+            function displayVideoMetadata(videoTitle, thumbnailUrl) {
+                document.getElementById('videoTitle').innerText = videoTitle;
+                videoThumbnail.src = thumbnailUrl; // Replace placeholder with actual thumbnail
+                videoDetails.style.display = 'block'; // Show the thumbnail container
+            }
+
+            // Fetch video metadata via AJAX before form submission
+            form.addEventListener('submit', function(event) {
+                event.preventDefault();
+                const youtubeLink = youtubeLinkInput.value;
+
+                // Show spinner and thumbnail container immediately
+                showLoadingSpinner();
+                videoDetails.style.display = 'block'; // Show thumbnail container after form submission
+
+                // Send AJAX request to fetch metadata
+                fetch('/fetch_metadata', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ youtubeLink: youtubeLink })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.video_title && data.thumbnail_url) {
+                        displayVideoMetadata(data.video_title, data.thumbnail_url);
+                    }
+
+                    // Submit the form after fetching metadata (continue generating summary)
+                    form.submit();
+                })
+                .catch(error => {
+                    console.error('Error fetching video metadata:', error);
+                    // Submit the form anyway, even if metadata fetch fails
+                    form.submit();
+                });
+            });
+
+            // Hide the spinner and analyzing text once the summary is generated
+            const summaryExists = {{ summary is not none and summary|length > 0 }};
+            if (summaryExists) {
+                hideLoadingSpinner();
+            }
+
+            // New: Auto-submit the form if a YouTube link is present in the input field
+            const youtubeLink = youtubeLinkInput.value;
             if (youtubeLink) {
-                showLoadingSpinner();  // Show spinner before auto-submit
                 form.submit();
             }
-
-            // Add the event listener for manual submission to also show the spinner
-            form.addEventListener('submit', function(event) {
-                showLoadingSpinner();  // Show spinner for manual submission
-            });
         });
     </script>
 
 {% endblock %}
-

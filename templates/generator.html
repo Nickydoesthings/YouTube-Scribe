@@ -10,7 +10,9 @@
             <p class="hero-subtitle">Cut through the noise. Get right to the important details.</p>
             <div class="hero-search">
                 <form id="generatorForm" action="{{ url_for('generator') }}" method="POST">
-                    <input type="url" name="youtubeLink" id="youtubeLink" value="{{ request.args.get('youtubeLink', '') }}" placeholder="Paste YouTube URL here" class="hero-input" required>
+                    <!-- Include the CSRF token here -->
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <input type="url" name="youtubeLink" id="youtubeLink" value="{{ youtube_link }}" placeholder="Paste YouTube URL here" class="hero-input" required>
                     <button type="submit" class="hero-btn">
                         <img src="{{ url_for('static', filename='images/search.svg') }}" alt="Submit" class="search-icon">
                     </button>
@@ -38,18 +40,30 @@
 
     <div id="resultContainer" style="margin-top: 30px;">
         {% if summary %}
-            <!-- Container for the generated summary with some styling -->
             <div class="summary-output-container" style="border: 1px solid #ccc; border-radius: 8px; padding: 20px; background-color: #f9f9f9;">
                 <div class="tutorial-content">
                     {{ summary | safe }} <!-- Render the Markdown content as HTML -->
                 </div>
                 <!-- Button to download the summary as a PDF -->
-                <form method="GET" action="/download/pdf">
-                    <input type="hidden" name="youtubeLink" value="{{ request.args.get('youtubeLink', '') }}">
-                    <button type="submit" class="btn btn-secondary mt-3">Download as PDF</button>
-                </form>
+                {% if current_user.is_authenticated and current_user.plan == 'pro' %}
+                    <form method="POST" action="{{ url_for('download_pdf') }}">
+                        <!-- Include CSRF token -->
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                        <!-- Ensure that the summary is properly passed as plain text (not JSON) -->
+                        <input type="hidden" name="summary" value="{{ summary | safe }}">
+                        <button type="submit" class="btn btn-secondary mt-3">Download as PDF</button>
+                    </form>
+                {% else %}
+                    <!-- Button to trigger the upgrade modal -->
+                    <button id="downloadPdfButton" class="btn btn-secondary mt-3">Download as PDF</button>
+                {% endif %}
+            </div>
+        {% elif error %}
+            <div class="alert alert-danger mt-3">
+                <strong>Error:</strong> {{ error }}
             </div>
         {% endif %}
+
 
         {% if error %}
             <div class="alert alert-danger mt-3">
@@ -58,8 +72,47 @@
         {% endif %}
     </div>
 
+    <!-- Upgrade Popup Modal -->
+    <div class="modal fade" id="upgradeModal" tabindex="-1" aria-labelledby="upgradeModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Upgrade to Pro</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="hideUpgradeModal()">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body" id="upgradeModalBody">
+                    <!-- Message will be set dynamically -->
+                </div>
+                <div class="modal-footer">
+                    <a href="{{ url_for('pricing') }}" class="btn btn-primary">View Pricing</a>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="hideUpgradeModal()">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- JavaScript to handle form submission, video metadata fetch, and loading spinner -->
     <script>
+        // Move these functions to the global scope
+        function showUpgradeModal(reason) {
+            let message = '';
+            if (reason === 'video_duration') {
+                message = '<p>The video you selected is longer than 15 minutes, which exceeds the limit for Free users.</p><p>Please consider upgrading to the Pro plan to process videos up to 2 hours long.</p>';
+            } else if (reason === 'download_pdf') {
+                message = '<p>Exporting to PDF is a Pro feature.</p><p>Please consider upgrading to the Pro plan to enable this feature.</p>';
+            } else {
+                message = '<p>The feature you\'re trying to access is available only to Pro users.</p><p>Please consider upgrading your plan to enjoy unlimited access.</p>';
+            }
+            document.getElementById('upgradeModalBody').innerHTML = message;
+            $('#upgradeModal').modal('show');
+        }
+
+        function hideUpgradeModal() {
+            $('#upgradeModal').modal('hide');
+        }
+
         document.addEventListener("DOMContentLoaded", function() {
             const form = document.getElementById('generatorForm');
             const youtubeLinkInput = document.getElementById('youtubeLink');
@@ -102,6 +155,7 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}' // Include CSRF token in AJAX request
                     },
                     body: JSON.stringify({ youtubeLink: youtubeLink })
                 })
@@ -122,15 +176,24 @@
             });
 
             // Hide the spinner and analyzing text once the summary is generated
-            const summaryExists = {{ summary is not none and summary|length > 0 }};
+            const summaryExists = {{ (summary is not none and summary|length > 0) | tojson }};
             if (summaryExists) {
                 hideLoadingSpinner();
             }
 
-            // New: Auto-submit the form if a YouTube link is present in the input field
-            const youtubeLink = youtubeLinkInput.value;
-            if (youtubeLink) {
-                form.submit();
+            // Show upgrade modal if 'show_upgrade_popup' is true
+            const showUpgradePopup = {{ show_upgrade_popup | tojson }};
+            const upgradeReason = {{ upgrade_reason | tojson }};
+            if (showUpgradePopup) {
+                showUpgradeModal(upgradeReason);
+            }
+
+            // Add event listener to the Download as PDF button
+            const downloadPdfButton = document.getElementById('downloadPdfButton');
+            if (downloadPdfButton) {
+                downloadPdfButton.addEventListener('click', function() {
+                    showUpgradeModal('download_pdf');
+                });
             }
         });
     </script>

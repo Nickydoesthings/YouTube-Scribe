@@ -1,8 +1,8 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_file
 from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user, LoginManager
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_wtf import FlaskForm
+from flask_wtf import FlaskForm, CSRFProtect
 from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import DataRequired, Email, EqualTo, Length
 from flask_migrate import Migrate
@@ -15,12 +15,25 @@ import logging
 import markdown
 from io import BytesIO
 from weasyprint import HTML
+from flask_wtf.csrf import CSRFProtect, generate_csrf
 
 # Initialize the Flask application
 app = Flask(__name__)
 
-# Intialize the login manager
+# Configuration for database and login management
+app.config['SECRET_KEY'] = 'your_secret_key_here'  # Replace with a secure secret key
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Initialize extensions
+db = SQLAlchemy(app)
+migrate = Migrate(app, db)  # Initialize Flask-Migrate with the app and database
 login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+
+# Initialize CSRF protection
+csrf = CSRFProtect(app)
 
 # Set up logging to track and debug any issues during runtime
 logging.basicConfig(level=logging.INFO)
@@ -32,17 +45,10 @@ client = OpenAI()
 # Set the OpenAI API key
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-# Configuration for database and login management
-app.config['SECRET_KEY'] = 'your_secret_key_here'  # Replace with a secure secret key
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-db = SQLAlchemy(app)
-migrate = Migrate(app, db)  # Initialize Flask-Migrate with the app and database
-
-login_manager = LoginManager()
-login_manager.init_app(app)
-login_manager.login_view = 'login'
+# Provide csrf_token to all templates
+@app.context_processor
+def inject_csrf_token():
+    return dict(csrf_token=generate_csrf())
 
 # Define User model
 class User(UserMixin, db.Model):
@@ -50,6 +56,7 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(150), unique=True, nullable=False)
     password = db.Column(db.String(150), nullable=False)
     usage_count = db.Column(db.Integer, default=0)
+    plan = db.Column(db.String(50), default='free')  # Field to track user's plan
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -135,30 +142,43 @@ def logout():
 def landing():
     if request.method == 'POST':
         youtube_link = request.form.get('youtubeLink')
-        return redirect(url_for('home') + f"?youtubeLink={youtube_link}")
+        return redirect(url_for('generator') + f"?youtubeLink={youtube_link}")
     return render_template('landing.html')
 
 @app.route('/generator', methods=['GET', 'POST'])
 def generator():
     error = None
-    html_summary = None
+    html_summary = None  # Make sure this is set to None by default
     youtube_link = request.args.get('youtubeLink', '')  # Retrieve YouTube link from query params (for GET request)
     video_title = None
     thumbnail_url = None
+    show_upgrade_popup = False  # Flag to control the display of the upgrade popup
+    upgrade_reason = request.args.get('upgrade_reason', None)  # Get upgrade reason from query parameters
 
     if request.method == 'POST':
         youtube_link = request.form.get('youtubeLink')
         if not youtube_link:
             error = "Please provide a YouTube video URL."
         else:
-            # Fetch video metadata (title and thumbnail)
-            audio_file_path, video_title, thumbnail_url = download_youtube_audio(youtube_link)
+            # Fetch video metadata (title, thumbnail, duration)
+            audio_file_path, video_title, thumbnail_url, duration = download_youtube_audio(youtube_link, metadata_only=True)
 
             if not video_title or not thumbnail_url:
                 error = "Failed to fetch video metadata."
                 return render_template('generator.html', error=error, youtube_link=youtube_link)
-            
-            # Proceed with summary generation
+            # Check video duration based on user's plan
+            if current_user.is_authenticated and current_user.plan == 'pro':
+                max_duration = 7200  # 2 hours in seconds
+            else:
+                max_duration = 900  # 15 minutes in seconds
+
+            if duration > max_duration:
+                show_upgrade_popup = True
+                upgrade_reason = 'video_duration'  # Set upgrade reason
+                return render_template('generator.html', error=error, youtube_link=youtube_link, video_title=video_title, thumbnail_url=thumbnail_url, show_upgrade_popup=show_upgrade_popup, upgrade_reason=upgrade_reason)
+
+            # Proceed with audio download and summary generation
+            audio_file_path, _, _, _ = download_youtube_audio(youtube_link)
             try:
                 transcript = transcribe_audio_with_whisper(audio_file_path)
                 if transcript:
@@ -177,19 +197,22 @@ def generator():
                 error = f"An unexpected error occurred: {e}"
 
     # Pass video title and thumbnail to the template
-    return render_template('generator.html', summary=html_summary, error=error, youtube_link=youtube_link, video_title=video_title, thumbnail_url=thumbnail_url)
+    return render_template('generator.html', summary=html_summary, error=error, youtube_link=youtube_link, video_title=video_title, thumbnail_url=thumbnail_url, show_upgrade_popup=show_upgrade_popup, upgrade_reason=upgrade_reason)
 
 
-
-
-@app.route('/download/pdf')
+@app.route('/download/pdf', methods=['POST'])
 @login_required
 def download_pdf():
-    summary = request.args.get('summary')
-    
+    if current_user.plan != 'pro':
+        # Redirect to generator page with a flag to show the upgrade popup
+        return redirect(url_for('generator', show_upgrade_popup=True, upgrade_reason='download_pdf'))
+
+    summary = request.form.get('summary')
+
     if not summary:
-        return "No summary available to download.", 400
-    
+        flash("No summary available for download. Please generate a summary first.", "danger")
+        return redirect(url_for('generator'))
+
     html_content = f"<html><body>{markdown.markdown(summary)}</body></html>"
     pdf_file = BytesIO()
     HTML(string=html_content).write_pdf(pdf_file)
@@ -201,32 +224,46 @@ def download_pdf():
 def about():
     return render_template('about.html')
 
+@app.route('/pricing')
+def pricing():
+    return render_template('pricing.html')
+
+@app.route('/upgrade_to_pro', methods=['GET', 'POST'])
+@login_required
+def upgrade_to_pro():
+    # Here you would handle the payment process
+    # For now, we'll directly upgrade the user's plan
+    current_user.plan = 'pro'
+    db.session.commit()
+    flash('You have been upgraded to the Pro plan.', 'success')
+    return redirect(url_for('pricing'))
+
 @app.route('/fetch_metadata', methods=['POST'])
 def fetch_metadata():
     youtube_link = request.json.get('youtubeLink')
-    
+
     if not youtube_link:
         return jsonify({'error': 'No YouTube link provided.'}), 400
 
     try:
-        # Fetch video metadata (title and thumbnail)
-        _, video_title, thumbnail_url = download_youtube_audio(youtube_link)
+        # Fetch video metadata (title, thumbnail, duration)
+        _, video_title, thumbnail_url, duration = download_youtube_audio(youtube_link, metadata_only=True)
 
         if not video_title or not thumbnail_url:
             return jsonify({'error': 'Failed to fetch video metadata.'}), 500
 
         return jsonify({
             'video_title': video_title,
-            'thumbnail_url': thumbnail_url
+            'thumbnail_url': thumbnail_url,
+            'duration': duration
         }), 200
 
     except Exception as e:
         logger.error(f"An error occurred while fetching metadata: {e}")
         return jsonify({'error': 'An unexpected error occurred.'}), 500
 
-
-# Function to download YouTube audio
-def download_youtube_audio(video_url, save_path='.'):
+# Function to download YouTube audio and fetch metadata
+def download_youtube_audio(video_url, save_path='.', metadata_only=False):
     try:
         ydl_opts = {
             'format': 'bestaudio/best',
@@ -241,38 +278,43 @@ def download_youtube_audio(video_url, save_path='.'):
             ],
             'prefer_ffmpeg': True,
             'keepvideo': False,
+            'skip_download': metadata_only,  # Skip download if only metadata is needed
         }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info_dict = ydl.extract_info(video_url)
-            filename = ydl.prepare_filename(info_dict)
-            audio_file_path = os.path.splitext(filename)[0] + ".mp3"
+            info_dict = ydl.extract_info(video_url, download=not metadata_only)
+            if not metadata_only:
+                filename = ydl.prepare_filename(info_dict)
+                audio_file_path = os.path.splitext(filename)[0] + ".mp3"
+            else:
+                audio_file_path = None
             video_title = info_dict.get('title', 'Unknown Title')
             thumbnail_url = info_dict.get('thumbnail', '')
+            duration = info_dict.get('duration', 0)  # Duration in seconds
 
-        return audio_file_path, video_title, thumbnail_url
+        return audio_file_path, video_title, thumbnail_url, duration
     except Exception as e:
         logger.error(f"An error occurred while downloading audio: {e}")
-        return None, None, None
+        return None, None, None, None
 
 # Function to transcribe audio with Whisper
 def transcribe_audio_with_whisper(audio_file_path):
     try:
         model = whisper.load_model("base")
         result = model.transcribe(audio_file_path)
-        
+
         if os.path.exists(audio_file_path):
             os.remove(audio_file_path)
             logger.info(f"Deleted audio file: {audio_file_path}")
-        
+
         return result['text']
     except Exception as e:
         logger.error(f"An error occurred during transcription: {e}")
-        
+
         if os.path.exists(audio_file_path):
             os.remove(audio_file_path)
             logger.info(f"Deleted audio file due to error: {audio_file_path}")
-        
+
         return None
 
 # Function to summarize text using OpenAI

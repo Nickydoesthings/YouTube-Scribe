@@ -7,15 +7,15 @@ from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import DataRequired, Email, EqualTo, Length
 from flask_migrate import Migrate
 import os
-import whisper
 import yt_dlp
-import openai
-from openai import OpenAI
+from openai import OpenAI  # Use OpenAI class from openai-enterprise library
 import logging
 import markdown
 from io import BytesIO
 from weasyprint import HTML
 from flask_wtf.csrf import CSRFProtect, generate_csrf
+import webvtt
+from io import StringIO
 
 # Initialize the Flask application
 app = Flask(__name__)
@@ -40,10 +40,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Initialize the OpenAI client using the API key from environment variables
-client = OpenAI()
-
-# Set the OpenAI API key
-openai.api_key = os.getenv("OPENAI_API_KEY")
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # Provide csrf_token to all templates
 @app.context_processor
@@ -161,7 +158,7 @@ def generator():
             error = "Please provide a YouTube video URL."
         else:
             # Fetch video metadata (title, thumbnail, duration)
-            audio_file_path, video_title, thumbnail_url, duration = download_youtube_audio(youtube_link, metadata_only=True)
+            _, video_title, thumbnail_url, duration = download_youtube_audio(youtube_link, metadata_only=True)
 
             if not video_title or not thumbnail_url:
                 error = "Failed to fetch video metadata."
@@ -177,10 +174,21 @@ def generator():
                 upgrade_reason = 'video_duration'  # Set upgrade reason
                 return render_template('generator.html', error=error, youtube_link=youtube_link, video_title=video_title, thumbnail_url=thumbnail_url, show_upgrade_popup=show_upgrade_popup, upgrade_reason=upgrade_reason)
 
-            # Proceed with audio download and summary generation
-            audio_file_path, _, _, _ = download_youtube_audio(youtube_link)
+            # Proceed with summary generation
+            # First, try to download captions
+            captions = download_youtube_captions(youtube_link)
+            if captions:
+                transcript = captions
+            else:
+                # Proceed to download audio and transcribe via Whisper API
+                audio_file_path, _, _, _ = download_youtube_audio(youtube_link)
+                transcript = transcribe_audio_with_whisper_api(audio_file_path)
+                # Delete the audio file after transcription
+                if os.path.exists(audio_file_path):
+                    os.remove(audio_file_path)
+                    logger.info(f"Deleted audio file: {audio_file_path}")
+
             try:
-                transcript = transcribe_audio_with_whisper(audio_file_path)
                 if transcript:
                     summary = summarize_text(transcript)
                     if summary:
@@ -191,7 +199,7 @@ def generator():
                     else:
                         error = "Failed to generate summary."
                 else:
-                    error = "Failed to transcribe the audio."
+                    error = "Failed to obtain transcript."
             except Exception as e:
                 logger.error(f"An unexpected error occurred: {e}")
                 error = f"An unexpected error occurred: {e}"
@@ -303,29 +311,86 @@ def download_youtube_audio(video_url, save_path='.', metadata_only=False):
         logger.error(f"An error occurred while downloading audio: {e}")
         return None, None, None, None
 
-# Function to transcribe audio with Whisper
-def transcribe_audio_with_whisper(audio_file_path):
+def download_youtube_captions(video_url):
     try:
-        model = whisper.load_model("base")
-        result = model.transcribe(audio_file_path)
+        ydl_opts = {
+            'skip_download': True,
+            'writesubtitles': True,
+            'writeautomaticsub': True,  # Enable downloading auto-generated subtitles
+            'subtitlesformat': 'vtt',
+            'subtitleslangs': ['en'],  # Specify languages, can be modified as needed
+            'outtmpl': '%(id)s.%(ext)s',
+        }
 
-        if os.path.exists(audio_file_path):
-            os.remove(audio_file_path)
-            logger.info(f"Deleted audio file: {audio_file_path}")
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info_dict = ydl.extract_info(video_url, download=False)
 
-        return result['text']
+            # Check for both manual and auto-generated captions
+            subtitles = info_dict.get('subtitles', {})
+            automatic_captions = info_dict.get('automatic_captions', {})
+
+            captions_available = False
+
+            if 'en' in subtitles:
+                captions_available = True
+                caption_type = 'subtitles'
+            elif 'en' in automatic_captions:
+                captions_available = True
+                caption_type = 'automatic_captions'
+            else:
+                captions_available = False
+
+            if captions_available:
+                # Now download the subtitles
+                ydl.download([video_url])
+                # The subtitles will be saved as {video_id}.en.vtt
+                video_id = info_dict.get('id')
+                caption_file = f"{video_id}.en.vtt"
+                if os.path.exists(caption_file):
+                    # Read the captions file
+                    with open(caption_file, 'r', encoding='utf-8') as f:
+                        captions_content = f.read()
+                    # Remove the captions file
+                    os.remove(caption_file)
+                    # Convert VTT to plain text
+                    captions = convert_vtt_to_text(captions_content)
+                    return captions
+                else:
+                    return None
+            else:
+                # No captions available
+                return None
+    except Exception as e:
+        logger.error(f"An error occurred while downloading captions: {e}")
+        return None
+
+
+# Function to convert VTT captions to plain text
+def convert_vtt_to_text(vtt_content):
+    try:
+        vtt_file = StringIO(vtt_content)
+        text = ''
+        for caption in webvtt.read_buffer(vtt_file):
+            text += caption.text + '\n'
+        return text
+    except Exception as e:
+        logger.error(f"An error occurred while converting VTT to text: {e}")
+        return ''
+
+# Function to transcribe audio with Whisper API
+def transcribe_audio_with_whisper_api(audio_file_path):
+    try:
+        with open(audio_file_path, 'rb') as audio_file:
+            transcript = client.audio.transcriptions.create(
+                model="whisper-1",
+                file=audio_file
+            )
+        return transcript.text
     except Exception as e:
         logger.error(f"An error occurred during transcription: {e}")
-
-        if os.path.exists(audio_file_path):
-            os.remove(audio_file_path)
-            logger.info(f"Deleted audio file due to error: {audio_file_path}")
-
         return None
 
 # Function to summarize text using OpenAI
-# !! Don't let chatGPT overwrite this function - it hasn't been updated to understand the needed syntax. Even when fixing other things, chatGPT tries to "correct" this and ends up breaking it.
-# This relies on the import openai, from openai import OpenAI, and client = OpenAI() lines from the top, which chatGPT often tries to overwrite as well.
 def summarize_text(text):
     try:
         completion = client.chat.completions.create(
@@ -335,7 +400,7 @@ def summarize_text(text):
                 {
                     "role": "user",
                     "content": f"""
-                    This is an audio transcript of a tutorial or DIY project. Please create a detailed, structured written tutorial in Markdown format based on this transcript. 
+                    This is an audio transcript of a tutorial, DIY project, or recipe video. Please create a detailed, structured written tutorial in Markdown format based on this transcript.
 
                     **Structure**:
                     1. **Summary**: Start with a brief summary of the tutorial. Summarize the goal and the key steps involved.
@@ -363,7 +428,7 @@ def summarize_text(text):
 
                     **Transcript**:
                     {text}
-                    """     
+                    """
                 }
             ]
         )

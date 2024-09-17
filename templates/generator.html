@@ -7,11 +7,11 @@
     <div class="hero-section">
         <div class="hero-content">
             <h1 class="hero-title">YouTube -> Written Instructions</h1>
-            <p class="hero-subtitle">Cut through the noise. Get right to the important details.</p>
+            <p class="hero-subtitle">Cut through the noise. Get to the point.</p>
             <div class="hero-search">
                 <form id="generatorForm" action="{{ url_for('generator') }}" method="POST">
-                    <!-- Include the CSRF token here -->
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <!-- Include the CSRF token correctly -->
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="url" name="youtubeLink" id="youtubeLink" value="{{ youtube_link }}" placeholder="Paste YouTube URL here" class="hero-input" required>
                     <button type="submit" class="hero-btn">
                         <img src="{{ url_for('static', filename='images/search.svg') }}" alt="Submit" class="search-icon">
@@ -30,7 +30,6 @@
     <!-- Video Title and Thumbnail -->
     <div class="video-details" id="videoDetails" style="text-align: center; margin-top: 20px; {% if not video_title and not thumbnail_url %} display: none; {% endif %}">
         <div class="thumbnail-container" style="display: inline-block; max-width: 30%; margin: 0 auto; border: 2px solid #ccc; border-radius: 8px; padding: 5px;">
-            <!-- Display the actual thumbnail if available, otherwise show placeholder -->
             <img class="video-thumbnail" id="videoThumbnail" src="{{ thumbnail_url if thumbnail_url else url_for('static', filename='images/default-video-thumbnail.png') }}" alt="Video Thumbnail" style="width: 100%; height: auto; border-radius: 8px;">
         </div>
         <div class="video-title" id="videoTitle" style="font-size: 1.5rem; margin-top: 10px;">
@@ -42,30 +41,19 @@
         {% if summary %}
             <div class="summary-output-container" style="border: 1px solid #ccc; border-radius: 8px; padding: 20px; background-color: #f9f9f9;">
                 <div class="tutorial-content">
-                    {{ summary | safe }} <!-- Render the Markdown content as HTML -->
+                    {{ summary | safe }}
                 </div>
-                <!-- Button to download the summary as a PDF -->
                 {% if current_user.is_authenticated and current_user.plan == 'pro' %}
                     <form method="POST" action="{{ url_for('download_pdf') }}">
-                        <!-- Include CSRF token -->
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                        <!-- Ensure that the summary is properly passed as plain text (not JSON) -->
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <input type="hidden" name="summary" value="{{ summary | safe }}">
                         <button type="submit" class="btn btn-secondary mt-3">Download as PDF</button>
                     </form>
                 {% else %}
-                    <!-- Button to trigger the upgrade modal -->
                     <button id="downloadPdfButton" class="btn btn-secondary mt-3">Download as PDF</button>
                 {% endif %}
             </div>
         {% elif error %}
-            <div class="alert alert-danger mt-3">
-                <strong>Error:</strong> {{ error }}
-            </div>
-        {% endif %}
-
-
-        {% if error %}
             <div class="alert alert-danger mt-3">
                 <strong>Error:</strong> {{ error }}
             </div>
@@ -83,7 +71,6 @@
                     </button>
                 </div>
                 <div class="modal-body" id="upgradeModalBody">
-                    <!-- Message will be set dynamically -->
                 </div>
                 <div class="modal-footer">
                     <a href="{{ url_for('pricing') }}" class="btn btn-primary">View Pricing</a>
@@ -95,26 +82,6 @@
 
     <!-- JavaScript to handle form submission, video metadata fetch, and loading spinner -->
     <script>
-        // Move these functions to the global scope
-        function showUpgradeModal(reason) {
-            let message = '';
-            if (reason === 'video_duration') {
-                message = '<p>The video you selected is longer than 15 minutes, which exceeds the limit for Free users.</p><p>Please consider upgrading to the Pro plan to process videos up to 2 hours long.</p>';
-            } else if (reason === 'download_pdf') {
-                message = '<p>Exporting to PDF is a Pro feature.</p><p>Please consider upgrading to the Pro plan to enable this feature.</p>';
-            } else if (reason === 'no_captions') {
-                message = '<p>This video does not have captions.</p><p>Audio transcription for videos without captions is available as part of our Pro plan.</p><p>To access this feature, we invite you to upgrade to the Pro plan and enjoy full functionality.</p>';
-            } else {
-                message = '<p>The feature you\'re trying to access is available only to Pro users.</p><p>Please consider upgrading your plan to enjoy full access.</p>';
-            }
-            document.getElementById('upgradeModalBody').innerHTML = message;
-            $('#upgradeModal').modal('show');
-        }
-
-        function hideUpgradeModal() {
-            $('#upgradeModal').modal('hide');
-        }
-
         document.addEventListener("DOMContentLoaded", function() {
             const form = document.getElementById('generatorForm');
             const youtubeLinkInput = document.getElementById('youtubeLink');
@@ -123,41 +90,39 @@
             const videoThumbnail = document.getElementById('videoThumbnail');
             const videoDetails = document.getElementById('videoDetails');
 
-            // Function to show the loading spinner and analyzing text
+            // Retrieve CSRF token from the meta tag in base.html
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
             function showLoadingSpinner() {
                 document.getElementById('loadingSpinner').style.display = 'block';
-                loadingText.style.display = 'block'; // Ensure "Analyzing..." is displayed with spinner
+                loadingText.style.display = 'block';
                 loadingContainer.style.display = 'block';
             }
 
-            // Function to hide loading spinner and analyzing text
             function hideLoadingSpinner() {
                 document.getElementById('loadingSpinner').style.display = 'none';
-                loadingText.style.display = 'none'; // Hide "Analyzing..." with the spinner
+                loadingText.style.display = 'none';
             }
 
-            // Function to display video metadata (including thumbnail)
             function displayVideoMetadata(videoTitle, thumbnailUrl) {
                 document.getElementById('videoTitle').innerText = videoTitle;
-                videoThumbnail.src = thumbnailUrl; // Replace placeholder with actual thumbnail
-                videoDetails.style.display = 'block'; // Show the thumbnail container
+                videoThumbnail.src = thumbnailUrl;
+                videoDetails.style.display = 'block';
             }
 
-            // Fetch video metadata via AJAX before form submission
             form.addEventListener('submit', function(event) {
                 event.preventDefault();
                 const youtubeLink = youtubeLinkInput.value;
 
-                // Show spinner and thumbnail container immediately
+                // Show the spinner while fetching metadata
                 showLoadingSpinner();
-                videoDetails.style.display = 'block'; // Show thumbnail container after form submission
 
-                // Send AJAX request to fetch metadata
+                // Fetch video metadata via AJAX
                 fetch('/fetch_metadata', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRFToken': '{{ csrf_token }}' // Include CSRF token in AJAX request
+                        'X-CSRFToken': csrfToken  // Include CSRF token in the AJAX request header
                     },
                     body: JSON.stringify({ youtubeLink: youtubeLink })
                 })
@@ -167,30 +132,28 @@
                         displayVideoMetadata(data.video_title, data.thumbnail_url);
                     }
 
-                    // Submit the form after fetching metadata (continue generating summary)
+                    // Submit the form after fetching metadata
                     form.submit();
                 })
                 .catch(error => {
                     console.error('Error fetching video metadata:', error);
+
                     // Submit the form anyway, even if metadata fetch fails
                     form.submit();
                 });
             });
 
-            // Hide the spinner and analyzing text once the summary is generated
             const summaryExists = {{ (summary is not none and summary|length > 0) | tojson }};
             if (summaryExists) {
                 hideLoadingSpinner();
             }
 
-            // Show upgrade modal if 'show_upgrade_popup' is true
             const showUpgradePopup = {{ show_upgrade_popup | tojson }};
             const upgradeReason = {{ upgrade_reason | tojson }};
             if (showUpgradePopup) {
                 showUpgradeModal(upgradeReason);
             }
 
-            // Add event listener to the Download as PDF button
             const downloadPdfButton = document.getElementById('downloadPdfButton');
             if (downloadPdfButton) {
                 downloadPdfButton.addEventListener('click', function() {

@@ -8,7 +8,7 @@ from wtforms.validators import DataRequired, Email, EqualTo, Length
 from flask_migrate import Migrate
 import os
 import yt_dlp
-from openai import OpenAI  # Use OpenAI class from openai-enterprise library
+from openai import OpenAI
 import logging
 import markdown
 from io import BytesIO
@@ -21,13 +21,13 @@ from io import StringIO
 app = Flask(__name__)
 
 # Configuration for database and login management
-app.config['SECRET_KEY'] = 'your_secret_key_here'  # Replace with a secure secret key
+app.config['SECRET_KEY'] = 'your_secret_key_here'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Initialize extensions
 db = SQLAlchemy(app)
-migrate = Migrate(app, db)  # Initialize Flask-Migrate with the app and database
+migrate = Migrate(app, db)
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
@@ -41,11 +41,6 @@ logger = logging.getLogger(__name__)
 
 # Initialize the OpenAI client using the API key from environment variables
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
-# Provide csrf_token to all templates
-@app.context_processor
-def inject_csrf_token():
-    return dict(csrf=generate_csrf())
 
 # Define User model
 class User(UserMixin, db.Model):
@@ -73,7 +68,6 @@ class LoginForm(FlaskForm):
 
 @login_manager.unauthorized_handler
 def unauthorized():
-    # Redirect to the login page without flashing a message
     return redirect(url_for('login'))
 
 # Routes for user authentication
@@ -98,18 +92,16 @@ def signup():
             flash('Account created successfully. Please log in.', 'success')
             return redirect(url_for('login'))
         except Exception as e:
-            db.session.rollback()  # Rollback in case of error
+            db.session.rollback()
             logger.error(f"Error creating user: {e}")
             flash('An error occurred while creating the account. Please try again.', 'danger')
 
-    # Check for form validation errors
     elif form.errors:
         for field, errors in form.errors.items():
             for error in errors:
-                flash(f"{error}", 'danger')  # Flash only the error message, not the field name
+                flash(f"{error}", 'danger')
 
     return render_template('signup.html', form=form)
-
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -145,26 +137,24 @@ def landing():
 @app.route('/generator', methods=['GET', 'POST'])
 def generator():
     error = None
-    html_summary = None  # Make sure this is set to None by default
-    youtube_link = request.args.get('youtubeLink', '')  # Retrieve YouTube link from query params (for GET request)
+    html_summary = None
+    youtube_link = request.args.get('youtubeLink', '')
     video_title = None
     thumbnail_url = None
-    show_upgrade_popup = False  # Flag to control the display of the upgrade popup
-    upgrade_reason = request.args.get('upgrade_reason', None)  # Get upgrade reason from query parameters
+    show_upgrade_popup = False
+    upgrade_reason = request.args.get('upgrade_reason', None)
 
     if request.method == 'POST':
         youtube_link = request.form.get('youtubeLink')
         if not youtube_link:
             error = "Please provide a YouTube video URL."
         else:
-            # Fetch video metadata (title, thumbnail, duration)
             _, video_title, thumbnail_url, duration = download_youtube_audio(youtube_link, metadata_only=True)
 
             if not video_title or not thumbnail_url:
                 error = "Failed to fetch video metadata."
                 return render_template('generator.html', error=error, youtube_link=youtube_link)
 
-            # Check video duration based on user's plan
             if current_user.is_authenticated and current_user.plan == 'pro':
                 max_duration = 3600  # 2 hours in seconds
             else:
@@ -172,25 +162,20 @@ def generator():
 
             if duration > max_duration:
                 show_upgrade_popup = True
-                upgrade_reason = 'video_duration'  # Set upgrade reason
+                upgrade_reason = 'video_duration'
                 return render_template('generator.html', error=error, youtube_link=youtube_link, video_title=video_title, thumbnail_url=thumbnail_url, show_upgrade_popup=show_upgrade_popup, upgrade_reason=upgrade_reason)
 
-            # Proceed with summary generation
-            # First, try to download captions
             captions = download_youtube_captions(youtube_link)
             if captions:
                 transcript = captions
             else:
-                # Check if the user is a pro user
                 if not current_user.is_authenticated or current_user.plan == 'free':
                     show_upgrade_popup = True
-                    upgrade_reason = 'no_captions'  # Set upgrade reason for captions
+                    upgrade_reason = 'no_captions'
                     return render_template('generator.html', error=error, youtube_link=youtube_link, video_title=video_title, thumbnail_url=thumbnail_url, show_upgrade_popup=show_upgrade_popup, upgrade_reason=upgrade_reason)
 
-                # If the user is pro, proceed with Whisper API transcription
                 audio_file_path, _, _, _ = download_youtube_audio(youtube_link)
                 transcript = transcribe_audio_with_whisper_api(audio_file_path)
-                # Delete the audio file after transcription
                 if os.path.exists(audio_file_path):
                     os.remove(audio_file_path)
                     logger.info(f"Deleted audio file: {audio_file_path}")
@@ -211,15 +196,12 @@ def generator():
                 logger.error(f"An unexpected error occurred: {e}")
                 error = f"An unexpected error occurred: {e}"
 
-    # Pass video title and thumbnail to the template
     return render_template('generator.html', summary=html_summary, error=error, youtube_link=youtube_link, video_title=video_title, thumbnail_url=thumbnail_url, show_upgrade_popup=show_upgrade_popup, upgrade_reason=upgrade_reason)
-
 
 @app.route('/download/pdf', methods=['POST'])
 @login_required
 def download_pdf():
     if current_user.plan != 'pro':
-        # Redirect to generator page with a flag to show the upgrade popup
         return redirect(url_for('generator', show_upgrade_popup=True, upgrade_reason='download_pdf'))
 
     summary = request.form.get('summary')
@@ -248,12 +230,9 @@ def pricing():
 def my_account():
     return render_template('my_account.html', email=current_user.email, plan=current_user.plan)
 
-
 @app.route('/upgrade_to_pro', methods=['GET', 'POST'])
 @login_required
 def upgrade_to_pro():
-    # Here you would handle the payment process
-    # For now, we'll directly upgrade the user's plan
     current_user.plan = 'pro'
     db.session.commit()
     flash('You have been upgraded to the Pro plan.', 'success')
@@ -267,7 +246,6 @@ def fetch_metadata():
         return jsonify({'error': 'No YouTube link provided.'}), 400
 
     try:
-        # Fetch video metadata (title, thumbnail, duration)
         _, video_title, thumbnail_url, duration = download_youtube_audio(youtube_link, metadata_only=True)
 
         if not video_title or not thumbnail_url:
@@ -283,7 +261,6 @@ def fetch_metadata():
         logger.error(f"An error occurred while fetching metadata: {e}")
         return jsonify({'error': 'An unexpected error occurred.'}), 500
 
-# Function to download YouTube audio and fetch metadata
 def download_youtube_audio(video_url, save_path='.', metadata_only=False):
     try:
         ydl_opts = {
@@ -299,7 +276,7 @@ def download_youtube_audio(video_url, save_path='.', metadata_only=False):
             ],
             'prefer_ffmpeg': True,
             'keepvideo': False,
-            'skip_download': metadata_only,  # Skip download if only metadata is needed
+            'skip_download': metadata_only,
         }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -311,7 +288,7 @@ def download_youtube_audio(video_url, save_path='.', metadata_only=False):
                 audio_file_path = None
             video_title = info_dict.get('title', 'Unknown Title')
             thumbnail_url = info_dict.get('thumbnail', '')
-            duration = info_dict.get('duration', 0)  # Duration in seconds
+            duration = info_dict.get('duration', 0)
 
         return audio_file_path, video_title, thumbnail_url, duration
     except Exception as e:
@@ -323,16 +300,15 @@ def download_youtube_captions(video_url):
         ydl_opts = {
             'skip_download': True,
             'writesubtitles': True,
-            'writeautomaticsub': True,  # Enable downloading auto-generated subtitles
+            'writeautomaticsub': True,
             'subtitlesformat': 'vtt',
-            'subtitleslangs': ['en'],  # Specify languages, can be modified as needed
+            'subtitleslangs': ['en'],
             'outtmpl': '%(id)s.%(ext)s',
         }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info_dict = ydl.extract_info(video_url, download=False)
 
-            # Check for both manual and auto-generated captions
             subtitles = info_dict.get('subtitles', {})
             automatic_captions = info_dict.get('automatic_captions', {})
 
@@ -340,39 +316,27 @@ def download_youtube_captions(video_url):
 
             if 'en' in subtitles:
                 captions_available = True
-                caption_type = 'subtitles'
             elif 'en' in automatic_captions:
                 captions_available = True
-                caption_type = 'automatic_captions'
-            else:
-                captions_available = False
 
             if captions_available:
-                # Now download the subtitles
                 ydl.download([video_url])
-                # The subtitles will be saved as {video_id}.en.vtt
                 video_id = info_dict.get('id')
                 caption_file = f"{video_id}.en.vtt"
                 if os.path.exists(caption_file):
-                    # Read the captions file
                     with open(caption_file, 'r', encoding='utf-8') as f:
                         captions_content = f.read()
-                    # Remove the captions file
                     os.remove(caption_file)
-                    # Convert VTT to plain text
                     captions = convert_vtt_to_text(captions_content)
                     return captions
                 else:
                     return None
             else:
-                # No captions available
                 return None
     except Exception as e:
         logger.error(f"An error occurred while downloading captions: {e}")
         return None
 
-
-# Function to convert VTT captions to plain text
 def convert_vtt_to_text(vtt_content):
     try:
         vtt_file = StringIO(vtt_content)
@@ -384,7 +348,6 @@ def convert_vtt_to_text(vtt_content):
         logger.error(f"An error occurred while converting VTT to text: {e}")
         return ''
 
-# Function to transcribe audio with Whisper API
 def transcribe_audio_with_whisper_api(audio_file_path):
     try:
         with open(audio_file_path, 'rb') as audio_file:
@@ -397,7 +360,6 @@ def transcribe_audio_with_whisper_api(audio_file_path):
         logger.error(f"An error occurred during transcription: {e}")
         return None
 
-# Function to summarize text using OpenAI
 def summarize_text(text):
     try:
         completion = client.chat.completions.create(
@@ -445,7 +407,6 @@ def summarize_text(text):
     except Exception as e:
         logger.error(f"An error occurred during text summarization: {e}")
         return None
-
 
 if __name__ == '__main__':
     app.run(debug=True)

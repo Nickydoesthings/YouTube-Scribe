@@ -45,7 +45,7 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 # Provide csrf_token to all templates
 @app.context_processor
 def inject_csrf_token():
-    return dict(csrf_token=generate_csrf())
+    return dict(csrf=generate_csrf())
 
 # Define User model
 class User(UserMixin, db.Model):
@@ -163,6 +163,7 @@ def generator():
             if not video_title or not thumbnail_url:
                 error = "Failed to fetch video metadata."
                 return render_template('generator.html', error=error, youtube_link=youtube_link)
+
             # Check video duration based on user's plan
             if current_user.is_authenticated and current_user.plan == 'pro':
                 max_duration = 7200  # 2 hours in seconds
@@ -180,7 +181,13 @@ def generator():
             if captions:
                 transcript = captions
             else:
-                # Proceed to download audio and transcribe via Whisper API
+                # Check if the user is a pro user
+                if not current_user.is_authenticated or current_user.plan == 'free':
+                    show_upgrade_popup = True
+                    upgrade_reason = 'no_captions'  # Set upgrade reason for captions
+                    return render_template('generator.html', error=error, youtube_link=youtube_link, video_title=video_title, thumbnail_url=thumbnail_url, show_upgrade_popup=show_upgrade_popup, upgrade_reason=upgrade_reason)
+
+                # If the user is pro, proceed with Whisper API transcription
                 audio_file_path, _, _, _ = download_youtube_audio(youtube_link)
                 transcript = transcribe_audio_with_whisper_api(audio_file_path)
                 # Delete the audio file after transcription

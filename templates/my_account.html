@@ -7,10 +7,13 @@
         <p><strong>Email:</strong> {{ email }}</p>
         <p><strong>Plan:</strong> {{ plan }}</p>
 
-        <!-- Sign Out Button -->
+        <!-- Sign Out Button with CSRF token -->
         <form action="{{ url_for('logout') }}" method="POST">
+            <!-- Include CSRF token -->
+            <input type="hidden" name="csrf_token" value="{{ csrf }}">
             <button type="submit" class="btn btn-logout">Sign Out</button>
         </form>
     </div>
 </div>
 {% endblock %}
+

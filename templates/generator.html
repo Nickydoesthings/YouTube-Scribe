@@ -102,8 +102,10 @@
                 message = '<p>The video you selected is longer than 15 minutes, which exceeds the limit for Free users.</p><p>Please consider upgrading to the Pro plan to process videos up to 2 hours long.</p>';
             } else if (reason === 'download_pdf') {
                 message = '<p>Exporting to PDF is a Pro feature.</p><p>Please consider upgrading to the Pro plan to enable this feature.</p>';
+            } else if (reason === 'no_captions') {
+                message = '<p>This video does not have captions.</p><p>Audio transcription for videos without captions is available as part of our Pro plan.</p><p>To access this feature, we invite you to upgrade to the Pro plan and enjoy full functionality.</p>';
             } else {
-                message = '<p>The feature you\'re trying to access is available only to Pro users.</p><p>Please consider upgrading your plan to enjoy unlimited access.</p>';
+                message = '<p>The feature you\'re trying to access is available only to Pro users.</p><p>Please consider upgrading your plan to enjoy full access.</p>';
             }
             document.getElementById('upgradeModalBody').innerHTML = message;
             $('#upgradeModal').modal('show');

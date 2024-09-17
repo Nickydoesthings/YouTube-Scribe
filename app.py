@@ -166,7 +166,7 @@ def generator():
 
             # Check video duration based on user's plan
             if current_user.is_authenticated and current_user.plan == 'pro':
-                max_duration = 7200  # 2 hours in seconds
+                max_duration = 3600  # 2 hours in seconds
             else:
                 max_duration = 900  # 15 minutes in seconds
 

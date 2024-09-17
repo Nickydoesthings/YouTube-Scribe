@@ -377,6 +377,20 @@ footer {
     color: #f0ad4e;
 }
 
+.plan-title {
+    font-size: 2.5rem;
+    font-weight: bold; 
+    color: #f0ad4e;
+    margin-bottom: 10px;
+}
+
+.plan-price {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #f5c784;
+    margin-bottom: 10px;
+}
+
 .pricing-container {
     text-align: center;
     padding-top: 20px;
@@ -389,6 +403,10 @@ footer {
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
     color: white;
     text-align: center;
+    display: flex;
+    flex-direction: column; /* Ensures flex layout for vertical alignment */
+    justify-content: space-between; /* Pushes content apart */
+    min-height: 550px; /* Ensures both boxes have the same minimum height */
 }
 
 .pricing-card h2 {
@@ -407,9 +425,43 @@ footer {
     margin-bottom: 10px;
 }
 
+.section-divider {
+    border: 1px solid #555859; /* Accent color line */
+    margin: 15px 0; /* Spacing between sections */
+}
+
+.plan-features {
+    list-style: none;
+    padding: 0;
+    text-align: left;
+}
+
+.plan-features li {
+    display: flex;
+    align-items: flex-start;
+    font-size: 1.1rem;
+    color: white;
+    margin-bottom: 20px;
+}
+
 .plan-features .checkmark {
     color: #f0ad4e;
-    margin-right: 5px;
+    font-size: 1.5rem;
+    line-height: 1; /* Ensures proper alignment */
+    border: 2px solid #f0ad4e; /* Add border around the checkmark */
+    padding: 5px;
+    border-radius: 50%; /* Makes the box a circle */
+    margin-right: 10px; /* Spacing between checkmark circle and text */
+    width: 24px; /* Fixed width to ensure a perfect circle */
+    height: 24px; /* Fixed height to ensure a perfect circle */
+    display: flex;
+    align-items: center;
+    justify-content: center; /* Centers the checkmark inside the circle */
+}
+
+.plan-features .feature-text {
+    text-align: left;
+    width: 100%;
 }
 
 .free-tier {
@@ -418,6 +470,14 @@ footer {
 
 .pro-tier {
     background-color: #37474f;
+}
+
+.mt-auto {
+    margin-top: auto;
+}
+
+.col-md-5 {
+    max-width: 450px; /* Makes the blocks wider by default */
 }
 
 /* Account Page */
@@ -479,6 +539,11 @@ footer {
     }
 
     .pricing-card {
-        margin-bottom: 20px;
+        min-height: unset;
+        width: 100%;
+    }
+
+    .col-md-5 {
+        max-width: 100%;
     }
 }

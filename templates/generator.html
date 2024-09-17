@@ -38,8 +38,9 @@
     </div>
 
     <div id="resultContainer" style="margin-top: 30px;">
-        {% if summary %}
-            <div class="summary-output-container" style="border: 1px solid #ccc; border-radius: 8px; padding: 20px; background-color: #f9f9f9;">
+    {% if summary %}
+        <div class="summary-box">
+            <div class="summary-output-container">
                 <div class="tutorial-content">
                     {{ summary | safe }}
                 </div>
@@ -53,12 +54,13 @@
                     <button id="downloadPdfButton" class="btn btn-secondary mt-3">Download as PDF</button>
                 {% endif %}
             </div>
-        {% elif error %}
-            <div class="alert alert-danger mt-3">
-                <strong>Error:</strong> {{ error }}
-            </div>
-        {% endif %}
-    </div>
+        </div>
+    {% elif error %}
+        <div class="alert alert-danger mt-3">
+            <strong>Error:</strong> {{ error }}
+        </div>
+    {% endif %}
+</div>
 
     <!-- Upgrade Popup Modal -->
     <div class="modal fade" id="upgradeModal" tabindex="-1" aria-labelledby="upgradeModalLabel" aria-hidden="true">

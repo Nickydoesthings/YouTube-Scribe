@@ -165,6 +165,16 @@ h1,
     margin-top: 20px;
 }
 
+.summary-box {
+    max-width: 800px; /* Limit the width */
+    margin: 20px auto; /* Center the box with top/bottom margin */
+    padding: 20px; /* Padding inside the box */
+    background-color: #2b2b3b; /* Background color of the box */
+    border: 1px solid #495057; /* Border around the box */
+    border-radius: 10px; /* Rounded corners */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); /* Subtle box shadow */
+}
+
 /* Summary Output */
 .summary-output {
     text-align: left;
@@ -175,14 +185,13 @@ h1,
 }
 
 .summary-output-container {
-    max-width: 800px;
-    margin: 50px auto;
-    padding: 20px;
-    background-color: #2b2b3b;
-    border: 1px solid #495057;
+    background-color: #2b2b3b; /* Dark background */
+    border: 1px solid #495057; /* Slightly lighter border */
     border-radius: 5px;
+    padding: 20px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
     text-align: left;
+    color: #cfd8dc; /* Light text color */
 }
 
 .summary-output h2 {
@@ -204,10 +213,25 @@ h1,
     color: #cfd8dc;
 }
 
-.tutorial-content ol,
-.tutorial-content ul {
-    margin: 20px 0;
+.tutorial-content h1, .tutorial-content h2, .tutorial-content h3 {
+    color: #f0ad4e; /* Accent color for headings */
+    margin-top: 20px;
+}
+
+.tutorial-content ol {
     padding-left: 40px;
+    margin: 20px 0;
+}
+
+.tutorial-content ol li {
+    margin-bottom: 10px;
+    color: #ffffff; /* Ensure list items are readable */
+}
+
+.tutorial-content ul {
+    padding-left: 40px;
+    margin: 20px 0;
+    color: #cfd8dc;
 }
 
 .tutorial-content li {
@@ -216,12 +240,19 @@ h1,
 
 .tutorial-content p {
     margin-bottom: 15px;
+    font-size: 16px;
+    line-height: 1.6;
 }
 
 .tutorial-content h3,
 .tutorial-content h4 {
     margin-top: 20px;
     color: #f0ad4e;
+}
+
+.tutorial-content .tip {
+    font-style: italic;
+    color: #a5d6a7; /* Light green to indicate tip/note */
 }
 
 /* Landing Page */

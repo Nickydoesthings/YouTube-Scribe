@@ -1,11 +1,16 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="account-page">
-    <h1>My Account</h1>
-    <p><strong>Email:</strong> {{ email }}</p>
-    <p><strong>Plan:</strong> {{ plan }}</p>
-    
-    <!-- Future features can be added here -->
+<div class="account-container">
+    <div class="account-card">
+        <h1>My Account</h1>
+        <p><strong>Email:</strong> {{ email }}</p>
+        <p><strong>Plan:</strong> {{ plan }}</p>
+
+        <!-- Sign Out Button -->
+        <form action="{{ url_for('logout') }}" method="POST">
+            <button type="submit" class="btn btn-logout">Sign Out</button>
+        </form>
+    </div>
 </div>
 {% endblock %}

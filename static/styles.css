@@ -529,3 +529,60 @@ footer {
 .account-page h1 {
     margin-bottom: 20px;
 }
+
+/* Account page styles */
+.account-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 80vh; /* Adjusts the container to be vertically centered */
+    padding: 20px;
+}
+
+.account-card {
+    background-color: #fff;
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Subtle shadow effect */
+    text-align: left;
+    max-width: 400px;
+    width: 100%;
+}
+
+.account-card h1 {
+    font-size: 2rem;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.account-card p {
+    font-size: 1.1rem;
+    color: #555;
+}
+
+.account-card p strong {
+    color: #000; /* Slightly darker for emphasis */
+}
+
+/* Add responsiveness for smaller screens */
+@media (max-width: 600px) {
+    .account-card {
+        padding: 20px;
+    }
+}
+
+.btn-logout {
+    background-color: #dc3545; /* Bootstrap's danger/red color */
+    border: none;
+    color: white;
+    font-size: 1.2em;
+    padding: 10px 20px;
+    border-radius: 10px;
+    margin-top: 20px;
+    cursor: pointer;
+    width: 100%;
+}
+
+.btn-logout:hover {
+    background-color: #c82333;
+}

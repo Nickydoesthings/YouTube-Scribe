@@ -228,6 +228,12 @@ def about():
 def pricing():
     return render_template('pricing.html')
 
+@app.route('/my_account')
+@login_required
+def my_account():
+    return render_template('my_account.html', email=current_user.email, plan=current_user.plan)
+
+
 @app.route('/upgrade_to_pro', methods=['GET', 'POST'])
 @login_required
 def upgrade_to_pro():

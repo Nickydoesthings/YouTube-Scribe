@@ -518,3 +518,14 @@ footer {
     -o-transform: translate(0, 0);
     transform: translate(0, 0);
 }
+
+.account-page {
+    margin-top: 50px;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+}
+
+.account-page h1 {
+    margin-bottom: 20px;
+}

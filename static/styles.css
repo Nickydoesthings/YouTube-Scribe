@@ -1,27 +1,23 @@
+/* Font face setup */
 @font-face {
     font-family: 'SUSEfont';
-    src: url('/static/fonts/SUSE-Regular.ttf') format('truetype'); /* Correct the path */
+    src: url('/static/fonts/SUSE-Regular.ttf') format('truetype');
     font-weight: normal;
     font-style: normal;
 }
 
-
-/* Apply the custom font to the whole site */
+/* Apply custom font globally with fallback */
 body {
-    font-family: 'SUSEfont', Arial, sans-serif; /* Fallback to Arial and sans-serif in case the custom font doesn't load */
-}
-/* General body styling */
-body {
-    background-color: #f8f9fa;
-    color: #212529;
-    font-family: Arial, sans-serif;
+    font-family: 'SUSEfont', Arial, sans-serif;
+    background-color: #1e1e2f; /* Dark modern background */
+    color: #ffffff; /* Text color for better readability on dark background */
     margin: 0;
     padding: 0;
 }
 
-/* Navbar styling */
+/* Navbar Styling */
 .navbar {
-    font-family: SUSEfont;
+    font-family: 'SUSEfont';
     background-color: #343a40;
     padding: 10px;
     text-align: center;
@@ -34,89 +30,83 @@ body {
     font-weight: bold;
 }
 
-.navbar a:hover, .landing-cta .landing-signup-btn:hover {
+.navbar a:hover,
+.landing-cta .landing-signup-btn:hover {
     text-decoration: underline;
 }
 
-/* Container styling */
+/* Container */
 .container {
     max-width: 800px;
     margin: 50px auto;
     padding: 20px;
-    background-color: #ffffff;
-    border: 1px solid #ced4da;
+    background-color: #2b2b3b; /* Slightly lighter dark color for containers */
+    border: 1px solid #37474f; /* Subtle border */
     border-radius: 5px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
     text-align: center;
 }
 
-/* Header styling */
-h1, .features-title {
+/* Header Styling */
+h1,
+.features-title {
     font-size: 2rem;
     margin-bottom: 20px;
-    color: #343a40;
-
+    color: #f0ad4e; /* Accent color for headings */
     text-align: center;
 }
 
-/* Form and Input styling */
+/* Form Elements */
 .form-group {
     margin-bottom: 15px;
 }
 
 .form-group label {
     font-weight: bold;
-    color: #495057;
+    color: #cfd8dc; /* Lighter text color */
     display: block;
     margin-bottom: 10px;
     text-align: left;
 }
 
-.form-group input, .form-control {
+.form-group input,
+.form-control {
     width: 100%;
     padding: 10px;
     margin-bottom: 20px;
     border-radius: 5px;
-    border: 1px solid #ccc;
-    background-color: #ffffff;
-    color: #212529;
+    border: 1px solid #495057;
+    background-color: #2b2b3b;
+    color: #ffffff;
     font-size: 16px;
 }
 
-/* Button styling */
+/* Button Styles */
 .btn {
     font-size: 1.2em;
     padding: 10px 20px;
     border-radius: 10px;
-    margin-top: 20px;
-    margin-bottom: 10px;
     text-align: center;
     cursor: pointer;
 }
 
-.btn-block {
-    display: block;
-    width: 100%;
-}
-
 .btn-primary {
-    background-color: #007bff;
-    border: 1px solid #007bff;
-    color: #ffffff;
-    font-weight: bold;
+    background-color: #f0ad4e;
+    border-color: #f0ad4e;
+    border-radius: 30px;
+    color: #1e1e2f;
 }
 
 .btn-primary:hover {
-    background-color: #0056b3;
-    border-color: #0056b3;
+    background-color: #e09d3c;
+    border-color: #e09d3c;
 }
 
 .btn-secondary {
-    background-color: #6c757d;
-    border: 1px solid #6c757d;
-    color: #ffffff;
-    font-weight: bold;
-    margin-top: 15px;
+    background-color: #555;
+    border-color: #555;
+    border-radius: 30px;
+    color: white;
 }
 
 .btn-secondary:hover {
@@ -125,29 +115,23 @@ h1, .features-title {
 }
 
 /* Alerts and Messages */
-.flashes {
-    margin: 10px 0;
-}
-
 .alert {
     padding: 10px;
     margin-bottom: 10px;
     border-radius: 10px;
     color: white;
-    background-color: darkred; /* Default color for alerts */
+    background-color: darkred;
 }
 
 .alert-danger {
-    background-color: #ff4d4d; /* Specific color for 'danger' alerts */
+    background-color: #ff4d4d;
 }
 
-/* Logout Form */
-.logout-form {
-    display: inline;
-    margin-left: auto; /* Pushes the sign-out button to the right */
+.flashes {
+    margin: 10px 0;
 }
 
-/* Center the loading spinner and text */
+/* Loading Spinner */
 .loading-container {
     display: flex;
     flex-direction: column;
@@ -155,7 +139,6 @@ h1, .features-title {
     justify-content: center;
 }
 
-/* Loading spinner and text */
 .loading-spinner {
     margin: 20px auto;
     border: 8px solid #f3f3f3;
@@ -164,35 +147,30 @@ h1, .features-title {
     width: 60px;
     height: 60px;
     animation: spin 1s ease-in-out infinite;
-    z-index: 9999;
     position: relative;
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
-.loading-text {
-    margin-top: 10px;
-    font-size: 1rem;
-    color: #343a40;
-    z-index: 9999;
-    position: center;
-}
-
-/* Error messages */
+/* Error Messages */
 .error-message {
     color: red;
     margin-top: 20px;
 }
 
-/* Summary output */
+/* Summary Output */
 .summary-output {
     text-align: left;
     margin-top: 20px;
     padding: 20px;
-    background-color: #e9ecef;
+    background-color: #37474f;
     border-radius: 5px;
 }
 
@@ -200,34 +178,34 @@ h1, .features-title {
     max-width: 800px;
     margin: 50px auto;
     padding: 20px;
-    background-color: #ffffff;
-    border: 1px solid #ced4da;
+    background-color: #2b2b3b;
+    border: 1px solid #495057;
     border-radius: 5px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
     text-align: left;
 }
 
 .summary-output h2 {
-    color: #343a40;
+    color: #f0ad4e;
 }
 
 .summary-output pre {
-    background-color: #ffffff;
+    background-color: #2b2b3b;
     padding: 10px;
     border-radius: 5px;
-    overflow-x: auto;
     white-space: pre-wrap;
-    border: 1px solid #ced4da;
+    border: 1px solid #495057;
 }
 
-/* Tutorial content */
+/* Tutorial Content */
 .tutorial-content {
     line-height: 1.6;
     font-size: 16px;
-    color: #495057;
+    color: #cfd8dc;
 }
 
-.tutorial-content ol, .tutorial-content ul {
+.tutorial-content ol,
+.tutorial-content ul {
     margin: 20px 0;
     padding-left: 40px;
 }
@@ -240,33 +218,32 @@ h1, .features-title {
     margin-bottom: 15px;
 }
 
-.tutorial-content h3, .tutorial-content h4 {
+.tutorial-content h3,
+.tutorial-content h4 {
     margin-top: 20px;
-    color: #343a40;
+    color: #f0ad4e;
 }
 
-/* Landing page styling */
+/* Landing Page */
 .landing-page {
     max-width: 800px;
     margin: 0 auto;
     text-align: center;
     padding: 20px;
-    background-color: #f8f9fa;
+    background-color: #2b2b3b;
     border-radius: 8px;
-    box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.1);
+    box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.3);
 }
 
 .landing-title {
     font-size: 2.5rem;
     font-weight: 700;
-    color: #343a40;
-    margin-bottom: 10px;
+    color: #f0ad4e;
 }
 
 .landing-subtitle {
     font-size: 1.2rem;
-    color: #6c757d;
-    margin-bottom: 20px;
+    color: #cfd8dc;
 }
 
 .landing-cta {
@@ -276,23 +253,19 @@ h1, .features-title {
 .landing-cta .landing-signup-btn {
     font-size: 1.5rem;
     padding: 15px 30px;
-    color: #fff;
-    background-color: #007bff;
-    border: none;
+    color: #1e1e2f;
+    background-color: #f0ad4e;
     border-radius: 5px;
-    text-transform: uppercase;
-    text-decoration: none;
     box-shadow: 0px 4px 10px rgba(0, 123, 255, 0.4);
-    transition: background-color 0.3s ease;
 }
 
 .landing-cta .landing-signup-btn:hover {
-    background-color: #0056b3;
+    background-color: #e09d3c;
 }
 
 .landing-divider {
     margin: 40px 0;
-    border-top: 1px solid #dee2e6;
+    border-top: 1px solid #495057;
 }
 
 .landing-features {
@@ -302,55 +275,47 @@ h1, .features-title {
 
 .features-title {
     font-size: 2rem;
-    color: #343a40;
-    margin-bottom: 20px;
-
-    text-align: center;
+    color: #f0ad4e;
 }
 
 .feature-item {
     display: flex;
     align-items: center;
-    background-color: #f7f7f7 ;
+    background-color: #37474f;
     padding: 20px;
     border-radius: 8px;
-    box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1);
-    margin-bottom: 20px;
+    box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.3);
 }
 
 .feature-icon {
     width: 50px;
     height: 50px;
     margin-right: 20px;
-    fill: #007bff;
+    fill: #f0ad4e;
 }
 
 .feature-text {
     font-size: 1.2rem;
-    color: #495057;
-    line-height: 1.6;
+    color: #cfd8dc;
 }
 
-/* Hero Section Styling */
+/* Hero Section */
 .hero-section {
-    font-family: SUSEfont;
-    background-color: #2c1212;
+    background-color: #37474f;
     padding: 100px 0;
     text-align: center;
-    color: #fff;
+    color: #ffffff;
 }
 
 .hero-title {
     font-size: 3rem;
     font-weight: bold;
-    color: #fff;
-    margin-bottom: 20px;
+    color: #f0ad4e;
 }
 
 .hero-subtitle {
     font-size: 1.25rem;
-    margin-bottom: 40px;
-    color: #ddd;
+    color: #cfd8dc;
 }
 
 .hero-search {
@@ -365,13 +330,13 @@ h1, .features-title {
     padding: 15px 20px;
     border-radius: 30px;
     border: none;
-    outline: none;
+    background-color: #2b2b3b;
+    color: #ffffff;
     font-size: 1rem;
 }
 
 .hero-btn {
-    background-color: #f5c000;
-    border: none;
+    background-color: #f0ad4e;
     border-radius: 100%;
     padding: 15px;
     position: absolute;
@@ -379,7 +344,7 @@ h1, .features-title {
     top: 50%;
     transform: translateY(-50%);
     cursor: pointer;
-    width: 60px; 
+    width: 60px;
 }
 
 .search-icon {
@@ -387,14 +352,9 @@ h1, .features-title {
     height: 20px;
 }
 
-.hero-links {
-    margin-top: 30px;
-}
-
 .hero-link {
-    color: #f5c000;
+    color: #f0ad4e;
     font-size: 1rem;
-    margin: 0 10px;
     text-decoration: underline;
 }
 
@@ -408,142 +368,78 @@ footer {
     color: white;
     text-align: center;
     padding: 15px 0;
-    margin-top: 50px;
 }
 
-/* Pricing Page Styling */
+/* Pricing Page */
 .pricing-title {
     font-size: 2.5rem;
     margin-bottom: 40px;
+    color: #f0ad4e;
+}
+
+.pricing-container {
     text-align: center;
-    color: #343a40;
+    padding-top: 20px;
 }
 
 .pricing-card {
-    background-color: #ffffff;
-    border: 1px solid #ced4da;
-    border-radius: 8px;
+    background-color: #37474f;
+    border-radius: 15px;
     padding: 30px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    color: white;
     text-align: center;
-    margin-bottom: 20px;
 }
 
 .pricing-card h2 {
     font-size: 2rem;
-    margin-bottom: 20px;
-    color: #007bff;
+    color: #f0ad4e;
 }
 
 .pricing-card ul {
-    list-style-type: none;
+    list-style: none;
     padding: 0;
-    margin-bottom: 30px;
 }
 
 .pricing-card ul li {
     font-size: 1.1rem;
+    color: white;
     margin-bottom: 10px;
-    color: #495057;
 }
 
-.pricing-card .btn {
-    font-size: 1.2rem;
-    padding: 10px 20px;
+.plan-features .checkmark {
+    color: #f0ad4e;
+    margin-right: 5px;
 }
 
-/* Modal Styling */
-.modal-content {
-    border-radius: 8px;
+.free-tier {
+    background-color: #252535;
 }
 
-.modal-header {
-    background-color: #007bff;
-    color: white;
-    border-bottom: none;
-    border-top-left-radius: 8px;
-    border-top-right-radius: 8px;
+.pro-tier {
+    background-color: #37474f;
 }
 
-.modal-title {
-    font-weight: bold;
-}
-
-.modal-body {
-    padding: 20px;
-    color: #495057;
-}
-
-.modal-footer {
-    border-top: none;
-    padding: 15px;
-}
-
-.modal-footer .btn {
-    min-width: 120px;
-}
-
-.modal-footer .btn-primary {
-    background-color: #007bff;
-    border-color: #007bff;
-}
-
-.modal-footer .btn-secondary {
-    background-color: #6c757d;
-    border-color: #6c757d;
-}
-
-.close {
-    color: white;
-    opacity: 1;
-}
-
-.close:hover {
-    color: #e6e6e6;
-}
-
-/* Optional: Fade-in effect for the modal */
-.modal.fade .modal-dialog {
-    -webkit-transform: translate(0, -25%);
-    -moz-transform: translate(0, -25%);
-    -ms-transform: translate(0, -25%);
-    -o-transform: translate(0, -25%);
-    transform: translate(0, -25%);
-    transition: transform 0.3s ease-out;
-}
-
-.modal.show .modal-dialog {
-    -webkit-transform: translate(0, 0);
-    -moz-transform: translate(0, 0);
-    -ms-transform: translate(0, 0);
-    -o-transform: translate(0, 0);
-    transform: translate(0, 0);
-}
-
+/* Account Page */
 .account-page {
     margin-top: 50px;
     padding: 20px;
-    background-color: #f8f9fa;
+    background-color: #1e1e2f;
     border-radius: 8px;
 }
 
-.account-page h1 {
-    margin-bottom: 20px;
-}
-
-/* Account page styles */
 .account-container {
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 80vh; /* Adjusts the container to be vertically centered */
-    padding: 20px;
+    min-height: 80vh;
 }
 
 .account-card {
-    background-color: #fff;
+    background-color: #2b2b3b;
     padding: 40px;
     border-radius: 15px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Subtle shadow effect */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     text-align: left;
     max-width: 400px;
     width: 100%;
@@ -552,37 +448,37 @@ footer {
 .account-card h1 {
     font-size: 2rem;
     margin-bottom: 20px;
-    color: #333;
 }
 
 .account-card p {
     font-size: 1.1rem;
-    color: #555;
+    color: #cfd8dc;
 }
 
 .account-card p strong {
-    color: #000; /* Slightly darker for emphasis */
-}
-
-/* Add responsiveness for smaller screens */
-@media (max-width: 600px) {
-    .account-card {
-        padding: 20px;
-    }
+    color: #ffffff;
 }
 
 .btn-logout {
-    background-color: #dc3545; /* Bootstrap's danger/red color */
+    background-color: #dc3545;
     border: none;
     color: white;
     font-size: 1.2em;
     padding: 10px 20px;
     border-radius: 10px;
-    margin-top: 20px;
-    cursor: pointer;
-    width: 100%;
 }
 
 .btn-logout:hover {
     background-color: #c82333;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 600px) {
+    .account-card {
+        padding: 20px;
+    }
+
+    .pricing-card {
+        margin-bottom: 20px;
+    }
 }

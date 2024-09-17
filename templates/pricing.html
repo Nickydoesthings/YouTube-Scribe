@@ -1,17 +1,17 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container">
+<div class="container pricing-container">
     <h1 class="pricing-title">Choose Your Plan</h1>
-    <div class="row">
+    <div class="row justify-content-center">
         <!-- Free Tier -->
-        <div class="col-md-6">
-            <div class="pricing-card">
-                <h2>Free Tier</h2>
-                <ul>
-                    <li>Unlimited generations</li>
-                    <li>Videos up to 15 minutes</li>
-                    <li>Save generations for future use</li>
+        <div class="col-md-4">
+            <div class="pricing-card free-tier">
+                <h2 class="plan-title">Free Tier</h2>
+                <ul class="plan-features">
+                    <li><span class="checkmark">✔</span> Unlimited generations</li>
+                    <li><span class="checkmark">✔</span> Videos up to 15 minutes</li>
+                    <li><span class="checkmark">✔</span> Save generations for future use</li>
                 </ul>
                 {% if not current_user.is_authenticated %}
                     <a href="{{ url_for('signup') }}" class="btn btn-primary">Sign Up for Free</a>
@@ -21,13 +21,14 @@
             </div>
         </div>
         <!-- Pro Tier -->
-        <div class="col-md-6">
-            <div class="pricing-card">
-                <h2>Pro Tier</h2>
-                <ul>
-                    <li>Unlimited generations</li>
-                    <li>Videos up to 2 hours</li>
-                    <li>Export to PDF, Word</li>
+        <div class="col-md-4">
+            <div class="pricing-card pro-tier">
+                <h2 class="plan-title">Pro Tier</h2>
+                <ul class="plan-features">
+                    <li><span class="checkmark">✔</span> Unlimited generations</li>
+                    <li><span class="checkmark">✔</span> Videos up to 2 hours</li>
+                    <li><span class="checkmark">✔</span> Export to PDF, Word</li>
+                    <li><span class="checkmark">✔</span> Access to transcription for videos without captions</li>
                 </ul>
                 {% if current_user.is_authenticated and current_user.plan == 'pro' %}
                     <button class="btn btn-secondary" disabled>Current Plan</button>

@@ -16,6 +16,7 @@ from weasyprint import HTML
 from flask_wtf.csrf import CSRFProtect, generate_csrf
 import webvtt
 from io import StringIO
+from datetime import timedelta
 
 # Initialize the Flask application
 app = Flask(__name__)
@@ -143,6 +144,7 @@ def generator():
     thumbnail_url = None
     show_upgrade_popup = False
     upgrade_reason = request.args.get('upgrade_reason', None)
+    video_length_formatted = None  # Variable to store formatted video length
 
     if request.method == 'POST':
         youtube_link = request.form.get('youtubeLink')
@@ -155,6 +157,9 @@ def generator():
                 error = "Failed to fetch video metadata."
                 return render_template('generator.html', error=error, youtube_link=youtube_link)
 
+            # Convert duration from seconds to "minutes:seconds" format
+            video_length_formatted = str(timedelta(seconds=duration)) if duration else None
+
             if current_user.is_authenticated and current_user.plan == 'pro':
                 max_duration = 3600  # 2 hours in seconds
             else:
@@ -163,7 +168,7 @@ def generator():
             if duration > max_duration:
                 show_upgrade_popup = True
                 upgrade_reason = 'video_duration'
-                return render_template('generator.html', error=error, youtube_link=youtube_link, video_title=video_title, thumbnail_url=thumbnail_url, show_upgrade_popup=show_upgrade_popup, upgrade_reason=upgrade_reason)
+                return render_template('generator.html', error=error, youtube_link=youtube_link, video_title=video_title, thumbnail_url=thumbnail_url, show_upgrade_popup=show_upgrade_popup, upgrade_reason=upgrade_reason, video_length=video_length_formatted)
 
             captions = download_youtube_captions(youtube_link)
             if captions:
@@ -196,7 +201,7 @@ def generator():
                 logger.error(f"An unexpected error occurred: {e}")
                 error = f"An unexpected error occurred: {e}"
 
-    return render_template('generator.html', summary=html_summary, error=error, youtube_link=youtube_link, video_title=video_title, thumbnail_url=thumbnail_url, show_upgrade_popup=show_upgrade_popup, upgrade_reason=upgrade_reason)
+    return render_template('generator.html', summary=html_summary, error=error, youtube_link=youtube_link, video_title=video_title, thumbnail_url=thumbnail_url, show_upgrade_popup=show_upgrade_popup, upgrade_reason=upgrade_reason, video_length=video_length_formatted)
 
 @app.route('/download/pdf', methods=['POST'])
 @login_required

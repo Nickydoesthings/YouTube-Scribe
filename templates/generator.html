@@ -60,7 +60,7 @@
             <strong>Error:</strong> {{ error }}
         </div>
     {% endif %}
-</div>
+    </div>
 
     <!-- Upgrade Popup Modal -->
     <div class="modal fade" id="upgradeModal" tabindex="-1" aria-labelledby="upgradeModalLabel" aria-hidden="true">
@@ -73,9 +73,11 @@
                     </button>
                 </div>
                 <div class="modal-body" id="upgradeModalBody">
+                    <!-- The message will be set dynamically -->
                 </div>
                 <div class="modal-footer">
-                    <a href="{{ url_for('pricing') }}" class="btn btn-primary">View Pricing</a>
+                    <!-- Optionally remove this button if you include the link in the message -->
+                    <!-- <a href="{{ url_for('pricing') }}" class="btn btn-primary">View Pricing</a> -->
                     <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="hideUpgradeModal()">Close</button>
                 </div>
             </div>
@@ -84,6 +86,9 @@
 
     <!-- JavaScript to handle form submission, video metadata fetch, and loading spinner -->
     <script>
+        // Define the pricing URL
+        const pricingUrl = "{{ url_for('pricing') }}";
+
         document.addEventListener("DOMContentLoaded", function() {
             const form = document.getElementById('generatorForm');
             const youtubeLinkInput = document.getElementById('youtubeLink');
@@ -145,6 +150,47 @@
                 });
             });
 
+            function showUpgradeModal(upgradeReason, videoLength = null) {
+                const upgradeModalBody = document.getElementById('upgradeModalBody');
+                const upgradeModalFooter = document.querySelector('.modal-footer');
+                
+                let message = '';
+
+                if (upgradeReason === 'download_pdf') {
+                    message = 'Downloading summaries as PDF is a Pro feature.';
+                } else if (upgradeReason === 'no_captions') {
+                    message = 'Transcribing videos without captions is a Pro feature.';
+                } else if (upgradeReason === 'video_duration') {
+                    if (videoLength !== null) {
+                        message = `Video Length: ${videoLength}. Processing videos longer than 15 minutes is a Pro feature.`;
+                    } else {
+                        message = 'Processing videos longer than 15 minutes is a Pro feature.';
+                    }
+                } else {
+                    message = 'This feature is available for Pro users only.';
+                }
+
+                // Update the modal body with the message
+                upgradeModalBody.innerHTML = message;
+
+                // Add the "Upgrade to Pro" button in the modal footer, next to the "Close" button
+                upgradeModalFooter.innerHTML = `
+                    <a href="{{ url_for('pricing') }}" class="btn btn-primary">Upgrade to Pro</a>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="hideUpgradeModal()">Close</button>
+                `;
+
+                var modal = new bootstrap.Modal(document.getElementById('upgradeModal'));
+                modal.show();
+            }
+
+            function hideUpgradeModal() {
+                var modalElement = document.getElementById('upgradeModal');
+                var modal = bootstrap.Modal.getInstance(modalElement);
+                if (modal) {
+                    modal.hide();
+                }
+            }
+
             const summaryExists = {{ (summary is not none and summary|length > 0) | tojson }};
             if (summaryExists) {
                 hideLoadingSpinner();
@@ -152,8 +198,10 @@
 
             const showUpgradePopup = {{ show_upgrade_popup | tojson }};
             const upgradeReason = {{ upgrade_reason | tojson }};
+            const videoLength = {{ video_length | tojson | default('null') }};
+
             if (showUpgradePopup) {
-                showUpgradeModal(upgradeReason);
+                showUpgradeModal(upgradeReason, videoLength);
             }
 
             const downloadPdfButton = document.getElementById('downloadPdfButton');

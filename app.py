@@ -17,6 +17,8 @@ from flask_wtf.csrf import CSRFProtect, generate_csrf
 import webvtt
 from io import StringIO
 from datetime import timedelta
+from docx import Document
+from bs4 import BeautifulSoup  # To parse HTML
 
 # Initialize the Flask application
 app = Flask(__name__)
@@ -221,6 +223,51 @@ def download_pdf():
     pdf_file.seek(0)
 
     return send_file(pdf_file, as_attachment=True, download_name="summary.pdf")
+
+@app.route('/download/word', methods=['POST'])
+@login_required
+def download_word():
+    if current_user.plan != 'pro':
+        return redirect(url_for('generator', show_upgrade_popup=True, upgrade_reason='download_word'))
+
+    summary = request.form.get('summary')
+
+    if not summary:
+        flash("No summary available for download. Please generate a summary first.", "danger")
+        return redirect(url_for('generator'))
+
+    # Create a new Word document
+    doc = Document()
+    doc.add_heading('Summary', 0)
+
+    # Parse the HTML content and convert it to Word-friendly format
+    soup = BeautifulSoup(summary, 'html.parser')
+
+    for element in soup.find_all():
+        if element.name == 'h1':
+            doc.add_heading(element.get_text(), level=1)
+        elif element.name == 'h2':
+            doc.add_heading(element.get_text(), level=2)
+        elif element.name == 'h3':
+            doc.add_heading(element.get_text(), level=3)
+        elif element.name == 'p':
+            doc.add_paragraph(element.get_text())
+        elif element.name == 'ul':
+            # Keep bullets as bullets
+            for li in element.find_all('li'):
+                doc.add_paragraph(li.get_text(), style='List Bullet')
+        elif element.name == 'ol':
+            # Turns numbered lists into bullets bc there's no way to reset the counter between sections :( whatevr
+            for li in element.find_all('li'):
+                doc.add_paragraph(li.get_text(), style='List Bullet')  
+
+    # Save the document in memory
+    word_file = BytesIO()
+    doc.save(word_file)
+    word_file.seek(0)
+
+    return send_file(word_file, as_attachment=True, download_name="summary.docx")
+
 
 @app.route('/about')
 def about():

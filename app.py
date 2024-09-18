@@ -19,6 +19,10 @@ from io import StringIO
 from datetime import timedelta
 from docx import Document
 from bs4 import BeautifulSoup  # To parse HTML
+import sib_api_v3_sdk # For Brevo stuff
+from itsdangerous import URLSafeTimedSerializer
+from flask import url_for
+from flask_mail import Message
 
 # Initialize the Flask application
 app = Flask(__name__)
@@ -50,9 +54,10 @@ class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(150), unique=True, nullable=False)
     password = db.Column(db.String(150), nullable=False)
+    is_confirmed = db.Column(db.Boolean, default=False)  # New field for email confirmation
+    confirmation_token = db.Column(db.String(100), nullable=True)  # Token for email confirmation
     usage_count = db.Column(db.Integer, default=0)
-    plan = db.Column(db.String(50), default='free')  # Field to track user's plan
-
+    plan = db.Column(db.String(50), default='free')
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
@@ -87,12 +92,20 @@ def signup():
             flash('Email already exists.', 'danger')
             return redirect(url_for('signup'))
 
-        # Create a new user
+        # Create a new user with confirmation token
         try:
             new_user = User(email=email, password=generate_password_hash(password, method='pbkdf2:sha256'))
             db.session.add(new_user)
             db.session.commit()
-            flash('Account created successfully. Please log in.', 'success')
+            
+            # Generate token and send confirmation email
+            token = generate_confirmation_token(new_user.email)
+            new_user.confirmation_token = token
+            db.session.commit()
+
+            send_confirmation_email(new_user.email, token)
+
+            flash('Account created successfully. Please check your email to confirm your account.', 'success')
             return redirect(url_for('login'))
         except Exception as e:
             db.session.rollback()
@@ -116,12 +129,36 @@ def login():
         # Check if the user exists and verify the password
         user = User.query.filter_by(email=email).first()
         if user and check_password_hash(user.password, password):
+            if not user.is_confirmed:
+                flash('Please confirm your email before logging in.', 'danger')
+                return redirect(url_for('login'))
+            
             login_user(user)
             return redirect(url_for('generator'))
         else:
             flash('Invalid email or password.', 'danger')
 
     return render_template('login.html', form=form)
+
+@app.route('/confirm/<token>')
+def confirm_email(token):
+    try:
+        email = confirm_token(token)
+    except:
+        flash('The confirmation link is invalid or has expired.', 'danger')
+        return redirect(url_for('login'))
+
+    user = User.query.filter_by(email=email).first_or_404()
+
+    if user.is_confirmed:
+        flash('Account already confirmed. Please login.', 'success')
+    else:
+        user.is_confirmed = True
+        user.confirmation_token = None
+        db.session.commit()
+        flash('You have confirmed your account. Thanks!', 'success')
+
+    return redirect(url_for('login'))
 
 @app.route('/logout', methods=['GET', 'POST'])
 @login_required
@@ -459,6 +496,47 @@ def summarize_text(text):
     except Exception as e:
         logger.error(f"An error occurred during text summarization: {e}")
         return None
+
+# Generate a confirmation token
+def generate_confirmation_token(email):
+    serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
+    return serializer.dumps(email, salt='email-confirmation-salt')
+
+# Confirm the token
+def confirm_token(token, expiration=3600):
+    serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
+    try:
+        email = serializer.loads(
+            token,
+            salt='email-confirmation-salt',
+            max_age=expiration
+        )
+    except:
+        return False
+    return email
+
+# Send confirmation email using Brevo
+def send_confirmation_email(user_email, token):
+    api_key = os.getenv("BREVO_API_KEY")
+    
+    configuration = sib_api_v3_sdk.Configuration()
+    configuration.api_key['api-key'] = api_key
+    api_instance = sib_api_v3_sdk.TransactionalEmailsApi(sib_api_v3_sdk.ApiClient(configuration))
+    
+    confirmation_url = url_for('confirm_email', token=token, _external=True)
+    print(f"Confirmation URL: {confirmation_url}")
+
+    send_smtp_email = sib_api_v3_sdk.SendSmtpEmail(
+        to=[{"email": user_email}],
+        template_id=1,  # The ID of the transactional email template you created
+        params={"confirmation_link": confirmation_url}  # Pass the confirmation URL here
+    )
+    
+    try:
+        api_instance.send_transac_email(send_smtp_email)
+    except Exception as e:
+        logger.error(f"Failed to send confirmation email: {e}")
+
 
 if __name__ == '__main__':
     app.run(debug=True)

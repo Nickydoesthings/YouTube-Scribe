@@ -825,6 +825,7 @@ footer {
     transform: translateY(-50%);
     cursor: pointer;
     width: 60px;
+    align-content: center;
 }
 
 .gen-section {

@@ -42,7 +42,7 @@
                     {% if current_user.is_authenticated and current_user.plan == 'pro' %}
                         <button class="btn btn-secondary" disabled>Current Plan</button>
                     {% else %}
-                        <a href="{{ url_for('upgrade_to_pro') }}" class="btn btn-primary">Upgrade Now</a>
+                        <a href="{{ url_for('upgrade_to_pro') }}" class="btn btn-primary">Coming Soon</a>
                     {% endif %}
                 </div>
             </div>

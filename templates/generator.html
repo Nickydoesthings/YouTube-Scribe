@@ -4,16 +4,16 @@
 
 {% block content %}
 
-    <div class="hero-section">
-        <div class="hero-content">
-            <h1 class="hero-title">YouTube -> Written Instructions</h1>
-            <p class="hero-subtitle">Cut through the noise. Get to the point.</p>
-            <div class="hero-search">
+    <div class="gen-section">
+        <div class="gen-content">
+            <h1 class="gen-title">YouTube -> Written Instructions</h1>
+            <p class="gen-subtitle">Cut through the noise. Get to the point.</p>
+            <div class="gen-search">
                 <form id="generatorForm" action="{{ url_for('generator') }}" method="POST">
                     <!-- Include the CSRF token correctly -->
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <input type="url" name="youtubeLink" id="youtubeLink" value="{{ youtube_link }}" placeholder="Paste YouTube URL here" class="hero-input" required>
-                    <button type="submit" class="hero-btn">
+                    <input type="url" name="youtubeLink" id="youtubeLink" value="{{ youtube_link }}" placeholder="Paste YouTube URL here" class="gen-input" required>
+                    <button type="submit" class="generator-submit">
                         <img src="{{ url_for('static', filename='images/search.svg') }}" alt="Submit" class="search-icon">
                     </button>
                 </form>

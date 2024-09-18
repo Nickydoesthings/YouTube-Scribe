@@ -4,45 +4,57 @@
 
 {% block content %}
 
-    <div class="hero-section">
-        <div class="hero-content">
-            <h1 class="hero-title">Convert tutorial videos to written instructions instantly</h1>
-            <p class="hero-subtitle">Paste the video URL below and instantly get step-by-step instructions.</p>
-            <p class="hero-subtitle">It's Free!</p>
-            <div class="hero-search">
-                <form action="{{ url_for('generator') }}" method="GET">
-                    <input type="text" name="youtubeLink" placeholder="Paste YouTube URL here" class="hero-input" required>
-                    <button type="submit" class="hero-btn">
-                        <img src="{{ url_for('static', filename='images/search.svg') }}" alt="Submit" class="search-icon">
-                    </button>
-                </form>
-            </div>
-            <div class="hero-links">
-                <a href="#" class="hero-link">FAQs</a>
-            </div>
-        </div>
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="hero-content">
+        <h1 class="hero-title">Your All-in-One YouTube Transcription Tool</h1>
+        <p class="hero-subtitle">Turn any YouTube video into easy-to-follow written instructions. Quickly, simply, and effectively.</p>
+        <a href="{{ url_for('signup') }}" class="cta-button">Sign Up for Free</a>
     </div>
+    <div class="hero-visual">
+        <img src="{{ url_for('static', filename='images/writing-girl.svg') }}" alt="Illustration" class="hero-image">
+    </div>
+</section>
 
-    <!-- Features Section -->
-    <div class="landing-features">
-        <h2 class="features-title">Why Use YouTube Scribe?</h2>
+<!-- Features Section -->
+<section class="features-section">
+    <h2 class="section-title">Why Use YouTube Scribe?</h2>
+    <div class="features-grid">
         <div class="feature-item">
-            <img src="{{ url_for('static', filename='images/clock.svg') }}" alt="Clock" class="feature-icon">
+            <div class="feature-icon">
+                <img src="{{ url_for('static', filename='images/clock.svg') }}" alt="Save Time">
+            </div>
             <div class="feature-text">
-                <strong>Save Time:</strong> Don't waste time with lengthy, long-winded tutorial videos. Get a set of written instructions in just seconds.
+                <h3>Save Time</h3>
+                <p>Don't slog through lengthy tutorials that drag on forever - just input a link and recieve a full set of written instructions instantly!</p>
             </div>
         </div>
         <div class="feature-item">
-            <img src="{{ url_for('static', filename='images/task-list.svg') }}" alt="Step-by-Step" class="feature-icon">
+            <div class="feature-icon">
+                <img src="{{ url_for('static', filename='images/task-list.svg') }}" alt="Step-by-Step Guides">
+            </div>
             <div class="feature-text">
-                <strong>Step-by-Step Guides:</strong> Follow clear, structured tutorials tailored from video content.
+                <h3>Step-by-Step Guides</h3>
+                <p>Our technology leverages cutting-edge Artificial Intelligence to output clear, easy-to-read text tutorials - all while staying true to the source material that you choose.</p>
             </div>
         </div>
         <div class="feature-item">
-            <img src="{{ url_for('static', filename='images/pdf.svg') }}" alt="PDF" class="feature-icon">
+            <div class="feature-icon">
+                <img src="{{ url_for('static', filename='images/pdf.svg') }}" alt="Download Summaries">
+            </div>
             <div class="feature-text">
-                <strong>Access Anywhere:</strong> Download summaries as PDFs and use them offline.
+                <h3>Download Summaries</h3>
+                <p>Pro users can export any generated summaries as a PDF or Microsoft Word file for easy offline access.</p>
             </div>
         </div>
     </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta-section">
+    <h2 class="cta-title">Ready to Convert Your First YouTube Video?</h2>
+    <p class="cta-subtitle">Sign up today and start creating written instructions in minutes!</p>
+    <a href="{{ url_for('signup') }}" class="cta-button">Sign Up Now</a>
+</section>
+
 {% endblock %}

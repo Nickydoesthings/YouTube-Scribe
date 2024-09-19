@@ -1,8 +1,12 @@
 {% extends "base.html" %}
 {% block content %}
-    <div class="container mt-5">
-        <h2>Registration Successful!</h2>
-        <p>Thank you for registering. Please check your email for a confirmation link to activate your account.</p>
+    <div class="container mt-5 email-sent-container">
+        <h2 class="mb-4">Registration Successful!</h2>
+        <p>
+            Thank you for registering. Please check your email 
+            (<strong class="email-address">{{ email }}</strong>) 
+            for a confirmation link to activate your account.
+        </p>
         
         <!-- Flash messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -18,10 +22,12 @@
         <form method="POST" action="{{ url_for('email_sent') }}">
             {{ form.hidden_tag() }}
             <div class="form-group">
-                <label for="email">If you did not receive the email, enter your email below to resend the confirmation link:</label>
-                {{ form.email(class="form-control", placeholder="Enter your email") }}
+                <p>
+                    If you did not receive the email, click the button below to resend the confirmation link to 
+                    <strong class="email-address">{{ email }}</strong>.
+                </p>
             </div>
-            {{ form.submit(class="btn btn-secondary mt-3") }}
+            {{ form.submit(class="btn btn-secondary") }}
         </form>
     </div>
 {% endblock %}

@@ -77,7 +77,6 @@ class LoginForm(FlaskForm):
     submit = SubmitField('Log In')
 
 class ResendConfirmationForm(FlaskForm):
-    email = StringField('Email', validators=[DataRequired(), Email(), Length(max=150)])
     submit = SubmitField('Resend Confirmation Email')
 
 # for email confirmation resends
@@ -141,8 +140,14 @@ def signup():
 def email_sent():
     form = ResendConfirmationForm()
     
+    # Retrieve the email from the session without removing it
+    email = session.get('email_for_confirmation', None)
+    
     if form.validate_on_submit():
-        email = form.email.data.strip().lower()
+        if not email:
+            flash('No email found for confirmation resending. Please sign up again.', 'danger')
+            return redirect(url_for('signup'))
+        
         user = User.query.filter_by(email=email).first()
         
         if not user:
@@ -178,17 +183,7 @@ def email_sent():
         
         return redirect(url_for('email_sent'))
     
-    # Retrieve the email from the session if available
-    email = session.pop('email_for_confirmation', None)
-    if email:
-        form.email.data = email
-    
-    # Redirect confirmed users if they somehow reach this page (Adds another layer of securitry)
-    if current_user.is_authenticated and current_user.is_confirmed:
-        flash('Your email is already confirmed. You do not need to resend confirmation emails.', 'info')
-        return redirect(url_for('my_account'))  # Replace 'dashboard' with your desired route
-
-    return render_template('email_sent.html', form=form)
+    return render_template('email_sent.html', form=form, email=email)
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -237,7 +232,9 @@ def confirm_email(token):
 @login_required
 def logout():
     logout_user()
+    session.pop('email_for_confirmation', None)
     flash('You have been logged out.', 'success')
+    
     return redirect(url_for('login'))
 
 @app.route('/', methods=['GET', 'POST'])

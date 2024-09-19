@@ -121,6 +121,19 @@ body {
     background-color: #ff4d4d;
 }
 
+.alert-success {
+    background-color: #28a745; /* Green background for success */
+    color: #ffffff; /* White text */
+    border-radius: 10px;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+
+.email-address {
+    color: #f0ad4e; /* Matches your primary color */
+    font-weight: bold;
+}
+
 .flashes {
     margin: 10px 0;
 }

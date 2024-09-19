@@ -783,6 +783,19 @@ footer {
     color: #f0ad4e; /* Accent color for modal title */
 }
 
+.modal-header .btn-close {
+    background: none; /* Removes the background */
+    border: none; /* Removes any border */
+    color: #ffffff; /* Makes the X white */
+    font-size: 1.5rem; /* Adjusts size of the X */
+    opacity: 0.75; /* Slight transparency */
+    outline: none; /* Removes focus outline */
+}
+
+.modal-header .btn-close:hover {
+    opacity: 1; /* Full opacity on hover */
+}
+
 .modal-body {
     color: #cfd8dc; /* Light text color for body */
 }

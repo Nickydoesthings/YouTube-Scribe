@@ -175,6 +175,7 @@ def landing():
     return render_template('landing.html')
 
 @app.route('/generator', methods=['GET', 'POST'])
+@login_required
 def generator():
     error = None
     html_summary = None

@@ -9,7 +9,15 @@
     <div class="hero-content">
         <h1 class="hero-title">Cut through the noise.</h1>
         <p class="hero-subtitle">Turn any YouTube video into easy-to-follow written instructions. Just paste in the link, and Tube Scribe takes care of the rest.</p>
-        <a href="{{ url_for('signup') }}" class="cta-button">Sign Up for Free</a>
+
+        <!-- Button Logic -->
+        {% if user_plan is none %}
+            <!-- Non-logged-in users -->
+            <a href="{{ url_for('signup') }}" class="cta-button">Sign Up for Free</a>
+        {% else %}
+            <!-- Logged-in users (both free and pro) -->
+            <a href="{{ url_for('generator') }}" class="cta-button">Get Started</a>
+        {% endif %}
     </div>
     <div class="hero-visual">
         <img src="{{ url_for('static', filename='images/writing-girl.svg') }}" alt="Illustration" class="hero-image">
@@ -26,7 +34,7 @@
             </div>
             <div class="feature-text">
                 <h3>Save Time</h3>
-                <p>Don't slog through lengthy tutorials that drag on forever - just input a link and recieve a full set of written instructions in seconds.</p>
+                <p>Don't slog through lengthy tutorials that drag on forever - just input a link and receive a full set of written instructions in seconds.</p>
             </div>
         </div>
         <div class="feature-item">
@@ -52,9 +60,17 @@
 
 <!-- CTA Section -->
 <section class="cta-section">
-    <h2 class="cta-title">Ready to Convert Your First YouTube Video?</h2>
-    <p class="cta-subtitle">Sign up today and start creating written instructions in minutes!</p>
-    <a href="{{ url_for('signup') }}" class="cta-button">Sign Up Now</a>
+    <h2 class="cta-title">Ready to Start Generating Written Tutorials?</h2>
+    <p class="cta-subtitle">Click below to start creating!</p>
+
+    <!-- Button Logic for CTA Section -->
+    {% if user_plan is none %}
+        <!-- Non-logged-in users -->
+        <a href="{{ url_for('signup') }}" class="cta-button">Sign Up Now</a>
+    {% else %}
+        <!-- Logged-in users (both free and pro) -->
+        <a href="{{ url_for('generator') }}" class="cta-button">Get Started</a>
+    {% endif %}
 </section>
 
 {% endblock %}

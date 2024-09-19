@@ -169,10 +169,15 @@ def logout():
 
 @app.route('/', methods=['GET', 'POST'])
 def landing():
+    user_plan = None
+    if current_user.is_authenticated:
+        user_plan = current_user.plan
+    
     if request.method == 'POST':
         youtube_link = request.form.get('youtubeLink')
         return redirect(url_for('generator') + f"?youtubeLink={youtube_link}")
-    return render_template('landing.html')
+    
+    return render_template('landing.html', user_plan=user_plan)
 
 @app.route('/generator', methods=['GET', 'POST'])
 @login_required

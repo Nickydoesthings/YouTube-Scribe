@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_file
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_file, session, abort
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -16,11 +16,11 @@ from weasyprint import HTML
 from flask_wtf.csrf import CSRFProtect, generate_csrf
 import webvtt
 from io import StringIO
-from datetime import timedelta
+from datetime import timedelta, datetime
 from docx import Document
 from bs4 import BeautifulSoup  # To parse HTML
 import sib_api_v3_sdk # For Brevo stuff
-from itsdangerous import URLSafeTimedSerializer
+from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
 from flask import url_for
 from flask_mail import Message
 
@@ -54,10 +54,12 @@ class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(150), unique=True, nullable=False)
     password = db.Column(db.String(150), nullable=False)
-    is_confirmed = db.Column(db.Boolean, default=False)  # New field for email confirmation
-    confirmation_token = db.Column(db.String(100), nullable=True)  # Token for email confirmation
+    is_confirmed = db.Column(db.Boolean, default=False)
+    confirmation_token = db.Column(db.String(100), nullable=True)
     usage_count = db.Column(db.Integer, default=0)
     plan = db.Column(db.String(50), default='free')
+    last_confirmation_sent_at = db.Column(db.DateTime, nullable=True)
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
@@ -74,6 +76,18 @@ class LoginForm(FlaskForm):
     password = PasswordField('Password', validators=[DataRequired()])
     submit = SubmitField('Log In')
 
+class ResendConfirmationForm(FlaskForm):
+    email = StringField('Email', validators=[DataRequired(), Email(), Length(max=150)])
+    submit = SubmitField('Resend Confirmation Email')
+
+# for email confirmation resends
+RESEND_COOLDOWN = timedelta(minutes=2)  # Adjust as needed
+
+def can_resend_confirmation(user):
+    if not user.last_confirmation_sent_at:
+        return True
+    return datetime.utcnow() - user.last_confirmation_sent_at > RESEND_COOLDOWN
+
 @login_manager.unauthorized_handler
 def unauthorized():
     return redirect(url_for('login'))
@@ -83,7 +97,7 @@ def unauthorized():
 def signup():
     form = SignupForm()
     if form.validate_on_submit():
-        email = form.email.data
+        email = form.email.data.strip()
         password = form.password.data
 
         # Check if the user already exists
@@ -105,8 +119,11 @@ def signup():
 
             send_confirmation_email(new_user.email, token)
 
-            flash('Account created successfully. Please check your email to confirm your account.', 'success')
-            return redirect(url_for('login'))
+            # Store the user's email in session to pre-fill the resend form
+            session['email_for_confirmation'] = new_user.email
+
+            # Remove the flash message to prevent duplication on email_sent.html
+            return redirect(url_for('email_sent'))
         except Exception as e:
             db.session.rollback()
             logger.error(f"Error creating user: {e}")
@@ -118,6 +135,61 @@ def signup():
                 flash(f"{error}", 'danger')
 
     return render_template('signup.html', form=form)
+
+# Route for email_sent.html which allows users to resend confirmation email if needed
+@app.route('/email_sent', methods=['GET', 'POST'])
+def email_sent():
+    form = ResendConfirmationForm()
+    
+    if form.validate_on_submit():
+        email = form.email.data.strip().lower()
+        user = User.query.filter_by(email=email).first()
+        
+        if not user:
+            flash('No account found with that email.', 'danger')
+            logger.warning(f"Resend attempt for non-existent email: {email}")
+            return redirect(url_for('email_sent'))
+        
+        if user.is_confirmed:
+            flash('Your email is already confirmed. Please log in.', 'success')
+            logger.info(f"Resend attempt for already confirmed email: {email}")
+            return redirect(url_for('login'))
+        
+        if not can_resend_confirmation(user):
+            flash('You can resend the confirmation email again later. Please try again after some time.', 'warning')
+            logger.warning(f"Rate limit exceeded for email: {email}")
+            return redirect(url_for('email_sent'))
+        
+        try:
+            # Generate a new confirmation token
+            token = generate_confirmation_token(user.email)
+            user.confirmation_token = token
+            user.last_confirmation_sent_at = datetime.utcnow()
+            db.session.commit()
+
+            # Send the confirmation email again
+            send_confirmation_email(user.email, token)
+
+            flash('A new confirmation email has been sent. Please check your email.', 'success')
+            logger.info(f"Confirmation email resent to: {email}")
+        except Exception as e:
+            logger.error(f"Error resending confirmation email to {email}: {e}")
+            flash('Failed to resend confirmation email. Please try again later.', 'danger')
+        
+        return redirect(url_for('email_sent'))
+    
+    # Retrieve the email from the session if available
+    email = session.pop('email_for_confirmation', None)
+    if email:
+        form.email.data = email
+    
+    # Redirect confirmed users if they somehow reach this page (Adds another layer of securitry)
+    if current_user.is_authenticated and current_user.is_confirmed:
+        flash('Your email is already confirmed. You do not need to resend confirmation emails.', 'info')
+        return redirect(url_for('my_account'))  # Replace 'dashboard' with your desired route
+
+    return render_template('email_sent.html', form=form)
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -144,17 +216,18 @@ def login():
 def confirm_email(token):
     try:
         email = confirm_token(token)
-    except:
+    except (SignatureExpired, BadSignature):
         flash('The confirmation link is invalid or has expired.', 'danger')
         return redirect(url_for('login'))
 
     user = User.query.filter_by(email=email).first_or_404()
 
     if user.is_confirmed:
-        flash('Account already confirmed. Please login.', 'success')
+        flash('Account already confirmed. Please log in.', 'success')
     else:
         user.is_confirmed = True
         user.confirmation_token = None
+        user.last_confirmation_sent_at = None  # Reset the timestamp
         db.session.commit()
         flash('You have confirmed your account. Thanks!', 'success')
 

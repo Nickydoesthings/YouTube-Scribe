@@ -606,6 +606,35 @@ footer {
     padding: 15px 0;
 }
 
+/* Account Page Updates */
+.my-account-title {
+    color: #f0ad4e; 
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;  /* Aligns the label to the left and input to the right */
+    margin-bottom: 10px;  
+}
+
+/* Left-aligned label */
+.label-yellow {
+    color: #f0ad4e;
+    font-weight: bold;
+    text-align: left;
+}
+
+/* Right-aligned input */
+.email-input, .plan-input {
+    color: #ffffff;  /* White color for the email and plan text */
+    text-align: right;  /* Right-align the email and plan inputs */
+    margin-left: auto;  /* Ensure the input text stays on the right */
+}
+
+.input-white {
+    color: #ffffff; 
+}
+
 /* Pricing Page */
 .pricing-title {
     font-size: 2.5rem;
@@ -624,7 +653,8 @@ footer {
     font-size: 1.8rem;
     font-weight: bold;
     color: #f5c784;
-    margin-bottom: 10px;
+    margin-bottom: 5px;
+    margin-top: 5px;
 }
 
 .pricing-container {
@@ -634,15 +664,15 @@ footer {
 
 .pricing-card {
     background-color: #37474f;
-    border-radius: 15px;
+    border-radius: 10px;
     padding: 30px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
     color: white;
     text-align: center;
     display: flex;
     flex-direction: column; /* Ensures flex layout for vertical alignment */
     justify-content: space-between; /* Pushes content apart */
     min-height: 550px; /* Ensures both boxes have the same minimum height */
+    margin-top: 10px;
 }
 
 .pricing-card h2 {
@@ -724,11 +754,12 @@ footer {
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 80vh;
+    min-height: 40vh;
+
 }
 
 .account-card {
-    background-color: #2b2b3b;
+    background-color: #37474f;
     padding: 40px;
     border-radius: 15px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
@@ -758,6 +789,7 @@ footer {
     font-size: 1.2em;
     padding: 10px 20px;
     border-radius: 10px;
+    margin-top: 30px;
 }
 
 .btn-logout:hover {
@@ -770,10 +802,6 @@ footer {
         padding: 20px;
     }
 
-    .pricing-card {
-        min-height: unset;
-        width: 100%;
-    }
 
     .col-md-5 {
         max-width: 100%;

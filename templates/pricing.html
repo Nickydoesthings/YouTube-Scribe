@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% set no_container = True %}  <!-- Disable the container -->
 
 {% block content %}
 <div class="container pricing-container">
@@ -18,7 +19,7 @@
     <div class="row justify-content-center">
         <!-- Free Tier -->
         <div class="col-md-5">
-            <div class="pricing-card free-tier d-flex flex-column">
+            <div class="pricing-card free-tier">
                 <h2 class="plan-title">Free Tier</h2>
                 <hr class="section-divider"> <!-- Section divider between title and price -->
                 <h3 class="plan-price">Free</h3>
@@ -39,7 +40,7 @@
         </div>
         <!-- Pro Tier -->
         <div class="col-md-5">
-            <div class="pricing-card pro-tier d-flex flex-column">
+            <div class="pricing-card pro-tier">
                 <h2 class="plan-title">Pro Tier</h2>
                 <hr class="section-divider"> <!-- Section divider between title and price -->
                 <h3 class="plan-price">$7.99/month</h3>

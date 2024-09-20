@@ -1,19 +1,24 @@
 {% extends "base.html" %}
+{% set no_container = True %}  <!-- Disable the container -->
 
 {% block content %}
 <div class="account-container">
     <div class="account-card">
-        <h1>My Account</h1>
-        <p><strong>Email:</strong> {{ email }}</p>
-        <p><strong>Plan:</strong> {{ plan }}</p>
+        <h1 class="my-account-title">My Account</h1>
+        <div class="info-row">
+            <strong class="label-yellow">Email:</strong>
+            <span class="input-white email-input">{{ email }}</span>
+        </div>
+        <div class="info-row">
+            <strong class="label-yellow">Plan:</strong>
+            <span class="input-white plan-input">{{ plan }}</span>
+        </div>
 
         <!-- Sign Out Button with CSRF token -->
         <form action="{{ url_for('logout') }}" method="POST">
-            <!-- Include CSRF token -->
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit" class="btn btn-logout">Sign Out</button>
         </form>
     </div>
 </div>
 {% endblock %}
-

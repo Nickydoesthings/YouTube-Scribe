@@ -61,6 +61,8 @@ class User(UserMixin, db.Model):
     usage_count = db.Column(db.Integer, default=0)
     plan = db.Column(db.String(50), default='free')
     last_confirmation_sent_at = db.Column(db.DateTime, nullable=True)
+    failed_attempts = db.Column(db.Integer, default=0)  # Track failed login attempts
+    lock_until = db.Column(db.DateTime, nullable=True)
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -99,7 +101,9 @@ class LogoutForm(FlaskForm):
     submit = SubmitField('Sign Out')
 
 # for email confirmation resends
-RESEND_COOLDOWN = timedelta(minutes=2)  # Adjust as needed
+RESEND_COOLDOWN = timedelta(minutes=2)  # Cooldown for resending confirmation email after 1st resend
+LOCKOUT_DURATION = timedelta(minutes=1)  # Lock user for 1 minute
+MAX_ATTEMPTS = 5  # Max failed login attempts allowed
 
 def can_resend_confirmation(user):
     if not user.last_confirmation_sent_at:
@@ -268,16 +272,39 @@ def login():
     if form.validate_on_submit():
         email = form.email.data
         password = form.password.data
-
-        # Check if the user exists and verify the password
         user = User.query.filter_by(email=email).first()
-        if user and check_password_hash(user.password, password):
-            if not user.is_confirmed:
-                flash('Please confirm your email before logging in.', 'danger')
+
+        if user:
+            # Check if user is locked out
+            if user.lock_until and user.lock_until > datetime.utcnow():
+                flash('Too many failed attempts. Try again later.', 'danger')
                 return redirect(url_for('login'))
-            
-            login_user(user)
-            return redirect(url_for('generator'))
+
+            # Check password
+            if check_password_hash(user.password, password):
+                if not user.is_confirmed:
+                    flash('Please confirm your email before logging in.', 'danger')
+                    return redirect(url_for('login'))
+                
+                # Reset failed attempts and lock_until on successful login
+                user.failed_attempts = 0
+                user.lock_until = None
+                db.session.commit()
+
+                login_user(user)
+                return redirect(url_for('generator'))
+            else:
+                # Increment failed attempts
+                user.failed_attempts += 1
+
+                # Lock account if max attempts exceeded
+                if user.failed_attempts >= MAX_ATTEMPTS:
+                    user.lock_until = datetime.utcnow() + LOCKOUT_DURATION
+                    flash(f'Too many failed attempts. Account locked for {LOCKOUT_DURATION.total_seconds() // 60} minutes.', 'danger')
+                else:
+                    flash('Invalid email or password.', 'danger')
+
+                db.session.commit()
         else:
             flash('Invalid email or password.', 'danger')
 

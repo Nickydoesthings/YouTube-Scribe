@@ -168,8 +168,27 @@ body {
 
 /* Error Messages */
 .error-message {
-    color: red;
-    margin-top: 20px;
+    font-size: 1.2rem;
+    color: #cfd8dc; /* Light text color for readability */
+    margin-bottom: 30px;
+}
+
+/* Error Page Styling */
+.error-container {
+    text-align: center;
+    padding: 50px;
+    background-color: #2b2b3b; /* Match container background */
+    border: 1px solid #495057; /* Subtle border to match the design */
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); /* Same box shadow as others */
+    max-width: 600px;
+    margin: 100px auto; /* Center the box on the page */
+}
+
+.error-title {
+    font-size: 2.5rem;
+    color: #f0ad4e; /* Accent color */
+    margin-bottom: 20px;
 }
 
 .summary-box {

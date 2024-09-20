@@ -6,6 +6,9 @@ from flask_wtf import FlaskForm, CSRFProtect
 from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import DataRequired, Email, EqualTo, Length
 from flask_migrate import Migrate
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+from flask_caching import Cache
 import os
 import yt_dlp
 from openai import OpenAI
@@ -26,6 +29,21 @@ from flask_mail import Message
 # Initialize the Flask application
 app = Flask(__name__)
 
+cache_config = {
+    "CACHE_TYPE": "filesystem",  # Use file-based cache
+    "CACHE_DIR": "cache-directory",  # Specify the directory where the cache will be stored
+}
+
+cache = Cache(app, config=cache_config)
+
+# Initialize Flask-Limiter for rate limiting
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=["200 per day", "50 per hour"],  # Applying the default limits globally
+    storage_uri="memory://",  # Uses memory cache, but data will persist in files
+    storage_options={"cache": cache}  # Use Flask-Caching for storage
+)
 # Configuration for database and login management
 app.config['SECRET_KEY'] = 'your_secret_key_here'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
@@ -50,6 +68,7 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # Initialize the serializer for tokens
 serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
+
 
 # Define User model
 class User(UserMixin, db.Model):
@@ -109,6 +128,12 @@ def can_resend_confirmation(user):
     if not user.last_confirmation_sent_at:
         return True
     return datetime.utcnow() - user.last_confirmation_sent_at > RESEND_COOLDOWN
+
+# Set up global rate limit that applies to all requests
+@app.before_request
+@limiter.limit("200 per day; 50 per hour")
+def apply_global_limit():
+    pass
 
 @login_manager.unauthorized_handler
 def unauthorized():
@@ -535,6 +560,11 @@ def fetch_metadata():
     except Exception as e:
         logger.error(f"An error occurred while fetching metadata: {e}")
         return jsonify({'error': 'An unexpected error occurred.'}), 500
+
+# Error handler for rate limit exceeded (429 Too Many Requests)
+@app.errorhandler(429)
+def ratelimit_handler(e):
+    return render_template('429.html'), 429
 
 def download_youtube_audio(video_url, save_path='.', metadata_only=False):
     try:

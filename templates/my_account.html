@@ -14,10 +14,34 @@
             <span class="input-white plan-input">{{ plan }}</span>
         </div>
 
+        <!-- Password Reset Button -->
+        <button type="button" class="btn btn-secondary mt-3" data-bs-toggle="modal" data-bs-target="#resetPasswordModal">
+            Reset Password
+        </button>
+
+        <!-- Reset Password Modal -->
+        <div class="modal fade" id="resetPasswordModal" tabindex="-1" aria-labelledby="resetPasswordModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <form method="POST" action="{{ url_for('reset_password_request') }}">
+                    {{ reset_form.hidden_tag() }}
+                    <div class="modal-content">
+                        <div class="modal-body">
+                            <p>To reset your password, please enter your email below. The reset link will be sent to this email.</p>
+                            {{ reset_form.email(class="form-control", value=email, readonly=True) }}
+                        </div>
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-primary">Send Reset Link</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
         <!-- Sign Out Button with CSRF token -->
         <form action="{{ url_for('logout') }}" method="POST">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button type="submit" class="btn btn-logout">Sign Out</button>
+            {{ logout_form.hidden_tag() }}
+            <button type="submit" class="btn btn-logout mt-3">Sign Out</button>
         </form>
     </div>
 </div>

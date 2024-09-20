@@ -21,7 +21,6 @@ from docx import Document
 from bs4 import BeautifulSoup  # To parse HTML
 import sib_api_v3_sdk # For Brevo stuff
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
-from flask import url_for
 from flask_mail import Message
 
 # Initialize the Flask application
@@ -48,6 +47,9 @@ logger = logging.getLogger(__name__)
 
 # Initialize the OpenAI client using the API key from environment variables
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+# Initialize the serializer for tokens
+serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
 
 # Define User model
 class User(UserMixin, db.Model):
@@ -77,7 +79,24 @@ class LoginForm(FlaskForm):
     submit = SubmitField('Log In')
 
 class ResendConfirmationForm(FlaskForm):
+    email = StringField('Email', validators=[DataRequired(), Email(), Length(max=150)])
     submit = SubmitField('Resend Confirmation Email')
+
+class ResetPasswordModalForm(FlaskForm):
+    email = StringField('Email', render_kw={'readonly': True})
+    submit = SubmitField('Send Reset Link')
+
+class ResetPasswordRequestForm(FlaskForm):
+    email = StringField('Email', validators=[DataRequired(), Email(), Length(max=150)])
+    submit = SubmitField('Send Reset Link')
+
+class ResetPasswordForm(FlaskForm):
+    password = PasswordField('New Password', validators=[DataRequired(), Length(min=6)])
+    confirm_password = PasswordField('Confirm New Password', validators=[DataRequired(), EqualTo('password', message="Passwords must match.")])
+    submit = SubmitField('Update Password')
+
+class LogoutForm(FlaskForm):
+    submit = SubmitField('Sign Out')
 
 # for email confirmation resends
 RESEND_COOLDOWN = timedelta(minutes=2)  # Adjust as needed
@@ -185,6 +204,63 @@ def email_sent():
     
     return render_template('email_sent.html', form=form, email=email)
 
+@app.route('/reset_password', methods=['GET', 'POST'])
+def reset_password_request():
+    form = ResetPasswordRequestForm()
+    if form.validate_on_submit():
+        email = form.email.data.strip()
+        user = User.query.filter_by(email=email).first()
+        
+        if user:
+            # Generate a secure token
+            token = serializer.dumps(user.email, salt='password-reset-salt')
+            send_password_reset_email(user.email, token)
+            flash('A password reset link has been sent to your email.', 'info')
+            logger.info(f"Password reset requested for email: {email}")
+        else:
+            # Inform the user that the email does not exist
+            flash('The provided email address is not registered in our system.', 'danger')
+            logger.warning(f"Password reset requested for non-existent email: {email}")
+        
+        return redirect(url_for('login'))
+    
+    return render_template('reset_password_request.html', form=form)
+
+@app.route('/reset_password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    try:
+        email = serializer.loads(token, salt='password-reset-salt', max_age=3600)  # Token valid for 1 hour
+    except SignatureExpired:
+        flash('The password reset link has expired.', 'danger')
+        return redirect(url_for('reset_password_request'))
+    except BadSignature:
+        flash('The password reset link is invalid.', 'danger')
+        return redirect(url_for('reset_password_request'))
+    
+    user = User.query.filter_by(email=email).first_or_404()
+    form = ResetPasswordForm()
+    
+    if form.validate_on_submit():
+        password = form.password.data
+        confirm_password = form.confirm_password.data
+        
+        if password != confirm_password:
+            flash('Passwords do not match.', 'danger')
+            return redirect(url_for('reset_password', token=token))
+        
+        if len(password) < 6:
+            flash('Password must be at least 6 characters long.', 'warning')
+            return redirect(url_for('reset_password', token=token))
+        
+        # Update the user's password
+        user.password = generate_password_hash(password, method='pbkdf2:sha256')
+        db.session.commit()
+        flash('Your password has been updated. Please log in.', 'success')
+        logger.info(f"Password updated for user: {email}")
+        return redirect(url_for('login'))
+    
+    return render_template('reset_password.html', form=form, token=token)
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -271,7 +347,7 @@ def generator():
             if not video_title or not thumbnail_url:
                 error = "Failed to fetch video metadata."
                 return render_template('generator.html', error=error, youtube_link=youtube_link)
-
+    
             # Convert duration from seconds to "minutes:seconds" format
             video_length_formatted = str(timedelta(seconds=duration)) if duration else None
 
@@ -381,7 +457,6 @@ def download_word():
 
     return send_file(word_file, as_attachment=True, download_name="summary.docx")
 
-
 @app.route('/about')
 def about():
     return render_template('about.html')
@@ -393,7 +468,15 @@ def pricing():
 @app.route('/my_account')
 @login_required
 def my_account():
-    return render_template('my_account.html', email=current_user.email, plan=current_user.plan)
+    reset_form = ResetPasswordModalForm()
+    logout_form = LogoutForm()
+    return render_template(
+        'my_account.html',
+        email=current_user.email,
+        plan=current_user.plan,
+        reset_form=reset_form,
+        logout_form=logout_form
+    )
 
 @app.route('/upgrade_to_pro', methods=['GET', 'POST'])
 @login_required
@@ -575,21 +658,19 @@ def summarize_text(text):
 
 # Generate a confirmation token
 def generate_confirmation_token(email):
-    serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
     return serializer.dumps(email, salt='email-confirmation-salt')
 
 # Confirm the token
 def confirm_token(token, expiration=3600):
-    serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
     try:
         email = serializer.loads(
             token,
             salt='email-confirmation-salt',
             max_age=expiration
         )
+        return email
     except:
         return False
-    return email
 
 # Send confirmation email using Brevo
 def send_confirmation_email(user_email, token):
@@ -600,19 +681,42 @@ def send_confirmation_email(user_email, token):
     api_instance = sib_api_v3_sdk.TransactionalEmailsApi(sib_api_v3_sdk.ApiClient(configuration))
     
     confirmation_url = url_for('confirm_email', token=token, _external=True)
-    print(f"Confirmation URL: {confirmation_url}")
+    logger.debug(f"Confirmation URL: {confirmation_url}")
 
     send_smtp_email = sib_api_v3_sdk.SendSmtpEmail(
         to=[{"email": user_email}],
-        template_id=1,  # The ID of the transactional email template you created
+        template_id=2,  # The ID of the transactional email template you created
         params={"confirmation_link": confirmation_url}  # Pass the confirmation URL here
     )
     
     try:
         api_instance.send_transac_email(send_smtp_email)
+        logger.info(f"Confirmation email sent to: {user_email}")
     except Exception as e:
         logger.error(f"Failed to send confirmation email: {e}")
 
+# Send password reset email using Brevo
+def send_password_reset_email(user_email, token):
+    api_key = os.getenv("BREVO_API_KEY")
+    
+    configuration = sib_api_v3_sdk.Configuration()
+    configuration.api_key['api-key'] = api_key
+    api_instance = sib_api_v3_sdk.TransactionalEmailsApi(sib_api_v3_sdk.ApiClient(configuration))
+    
+    reset_url = url_for('reset_password', token=token, _external=True)
+    logger.debug(f"Password Reset URL: {reset_url}")
+
+    send_smtp_email = sib_api_v3_sdk.SendSmtpEmail(
+        to=[{"email": user_email}],
+        template_id=2,  # The ID of the password reset email template you created
+        params={"reset_link": reset_url}  # Pass the reset URL here
+    )
+    
+    try:
+        api_instance.send_transac_email(send_smtp_email)
+        logger.info(f"Password reset email sent to: {user_email}")
+    except Exception as e:
+        logger.error(f"Failed to send password reset email to {user_email}: {e}")
 
 if __name__ == '__main__':
     app.run(debug=True)

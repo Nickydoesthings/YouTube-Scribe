@@ -191,47 +191,55 @@ def email_sent():
     # Retrieve the email from the session without removing it
     email = session.get('email_for_confirmation', None)
     
-    if form.validate_on_submit():
-        if not email:
-            flash('No email found for confirmation resending. Please sign up again.', 'danger')
-            return redirect(url_for('signup'))
-        
-        user = User.query.filter_by(email=email).first()
-        
-        if not user:
-            flash('No account found with that email.', 'danger')
-            logger.warning(f"Resend attempt for non-existent email: {email}")
-            return redirect(url_for('email_sent'))
-        
-        if user.is_confirmed:
-            flash('Your email is already confirmed. Please log in.', 'success')
-            logger.info(f"Resend attempt for already confirmed email: {email}")
-            return redirect(url_for('login'))
-        
-        if not can_resend_confirmation(user):
-            flash('You can resend the confirmation email again later. Please try again after some time.', 'warning')
-            logger.warning(f"Rate limit exceeded for email: {email}")
-            return redirect(url_for('email_sent'))
-        
-        try:
-            # Generate a new confirmation token
-            token = generate_confirmation_token(user.email)
-            user.confirmation_token = token
-            user.last_confirmation_sent_at = datetime.utcnow()
-            db.session.commit()
+    if not email:
+        flash('No email found for confirmation resending. Please sign up again.', 'danger')
+        return redirect(url_for('signup'))
 
-            # Send the confirmation email again
-            send_confirmation_email(user.email, token)
-
-            flash('A new confirmation email has been sent. Please check your email.', 'success')
-            logger.info(f"Confirmation email resent to: {email}")
-        except Exception as e:
-            logger.error(f"Error resending confirmation email to {email}: {e}")
-            flash('Failed to resend confirmation email. Please try again later.', 'danger')
+    # Logging to debug form validation
+    if request.method == 'POST':
+        logger.info("POST request received.")
         
-        return redirect(url_for('email_sent'))
-    
+        if form.validate_on_submit():
+            logger.info("Form validation passed.")
+            
+            user = User.query.filter_by(email=email).first()
+            
+            if not user:
+                flash('No account found with that email.', 'danger')
+                return redirect(url_for('signup'))
+            
+            if user.is_confirmed:
+                flash('Your email is already confirmed. Please log in.', 'success')
+                return redirect(url_for('login'))
+            
+            if not can_resend_confirmation(user):
+                flash('You can resend the confirmation email again later. Please try again after some time.', 'warning')
+                return redirect(url_for('email_sent'))
+
+            try:
+                # Generate a new confirmation token
+                token = generate_confirmation_token(user.email)
+                user.confirmation_token = token
+                user.last_confirmation_sent_at = datetime.utcnow()
+                db.session.commit()
+
+                # Send the confirmation email again
+                send_confirmation_email(user.email, token)
+
+                flash('A new confirmation email has been sent. Please check your email.', 'success')
+                return redirect(url_for('email_sent'))
+            except Exception as e:
+                flash('An error occurred while resending the confirmation email. Please try again.', 'danger')
+                return redirect(url_for('email_sent'))
+
+        # Log form errors if validation failed
+        if not form.validate_on_submit():
+            logger.error(f"Form validation failed. Errors: {form.errors}")
+            flash('Form validation failed. Please try again.', 'danger')
+
     return render_template('email_sent.html', form=form, email=email)
+
+
 
 @app.route('/reset_password', methods=['GET', 'POST'])
 def reset_password_request():
@@ -742,7 +750,7 @@ def send_confirmation_email(user_email, token):
 
     send_smtp_email = sib_api_v3_sdk.SendSmtpEmail(
         to=[{"email": user_email}],
-        template_id=2,  # The ID of the transactional email template you created
+        template_id=1,  # The ID of the transactional email template you created
         params={"confirmation_link": confirmation_url}  # Pass the confirmation URL here
     )
     

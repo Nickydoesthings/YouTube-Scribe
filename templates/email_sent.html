@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
-    <div class="container mt-5 email-sent-container">
+{% set no_container = True %}  <!-- Disable the container -->
+
         <h2 class="mb-4">Registration Successful!</h2>
         <p>
             Thank you for registering. Please check your email 
@@ -20,14 +21,16 @@
         {% endwith %}
         
         <form method="POST" action="{{ url_for('email_sent') }}">
-            {{ form.hidden_tag() }}
+            {{ form.hidden_tag() }}  <!-- CSRF protection -->
             <div class="form-group">
                 <p>
                     If you did not receive the email, click the button below to resend the confirmation link to 
                     <strong class="email-address">{{ email }}</strong>.
                 </p>
+                <!-- Hidden input for email -->
+                {{ form.email(class="form-control", type="hidden", value=email) }}
             </div>
             {{ form.submit(class="btn btn-secondary") }}
         </form>
-    </div>
+
 {% endblock %}

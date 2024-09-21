@@ -413,7 +413,16 @@ def generator():
 
             if not video_title or not thumbnail_url:
                 error = "Failed to fetch video metadata."
-                return render_template('generator.html', error=error, youtube_link=youtube_link)
+                return render_template(
+                    'generator.html',
+                    error=error,
+                    youtube_link=youtube_link,
+                    video_title=video_title,
+                    thumbnail_url=thumbnail_url,
+                    show_upgrade_popup=show_upgrade_popup,
+                    upgrade_reason=upgrade_reason,
+                    video_length=video_length_formatted
+                )
     
             # Convert duration from seconds to "minutes:seconds" format
             video_length_formatted = str(timedelta(seconds=duration)) if duration else None
@@ -426,7 +435,16 @@ def generator():
             if duration > max_duration:
                 show_upgrade_popup = True
                 upgrade_reason = 'video_duration'
-                return render_template('generator.html', error=error, youtube_link=youtube_link, video_title=video_title, thumbnail_url=thumbnail_url, show_upgrade_popup=show_upgrade_popup, upgrade_reason=upgrade_reason, video_length=video_length_formatted)
+                return render_template(
+                    'generator.html',
+                    error=error,
+                    youtube_link=youtube_link,
+                    video_title=video_title,
+                    thumbnail_url=thumbnail_url,
+                    show_upgrade_popup=show_upgrade_popup,
+                    upgrade_reason=upgrade_reason,
+                    video_length=video_length_formatted
+                )
 
             captions = download_youtube_captions(youtube_link)
             if captions:
@@ -435,7 +453,16 @@ def generator():
                 if not current_user.is_authenticated or current_user.plan == 'free':
                     show_upgrade_popup = True
                     upgrade_reason = 'no_captions'
-                    return render_template('generator.html', error=error, youtube_link=youtube_link, video_title=video_title, thumbnail_url=thumbnail_url, show_upgrade_popup=show_upgrade_popup, upgrade_reason=upgrade_reason)
+                    return render_template(
+                        'generator.html',
+                        error=error,
+                        youtube_link=youtube_link,
+                        video_title=video_title,
+                        thumbnail_url=thumbnail_url,
+                        show_upgrade_popup=show_upgrade_popup,
+                        upgrade_reason=upgrade_reason,
+                        video_length=video_length_formatted
+                    )
 
                 audio_file_path, _, _, _ = download_youtube_audio(youtube_link)
                 transcript = transcribe_audio_with_whisper_api(audio_file_path)

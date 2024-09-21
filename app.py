@@ -235,7 +235,7 @@ def email_sent():
         # Log form errors if validation failed
         if not form.validate_on_submit():
             logger.error(f"Form validation failed. Errors: {form.errors}")
-            flash('Form validation failed. Please try again.', 'danger')
+            flash('Unexpected Error. Please try again.', 'danger')
 
     return render_template('email_sent.html', form=form, email=email)
 

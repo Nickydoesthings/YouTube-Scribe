@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_file, session, abort
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_file, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -14,17 +14,15 @@ import yt_dlp
 from openai import OpenAI
 import logging
 import markdown
-from io import BytesIO
+from io import BytesIO, StringIO
 from weasyprint import HTML
-from flask_wtf.csrf import CSRFProtect, generate_csrf
 import webvtt
-from io import StringIO
 from datetime import timedelta, datetime
 from docx import Document
 from bs4 import BeautifulSoup  # To parse HTML
-import sib_api_v3_sdk # For Brevo stuff
+import sib_api_v3_sdk  # For Brevo stuff
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
-from flask_mail import Message
+
 
 # Initialize the Flask application
 app = Flask(__name__)

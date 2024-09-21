@@ -50,14 +50,13 @@ body {
 
 /* Form Elements */
 .form-group {
-    margin-bottom: 15px;
+    margin-bottom: 5px;
 }
 
 .form-group label {
     font-weight: bold;
     color: #cfd8dc; /* Lighter text color */
     display: block;
-    margin-bottom: 10px;
     text-align: left;
 }
 
@@ -65,12 +64,98 @@ body {
 .form-control {
     width: 100%;
     padding: 10px;
-    margin-bottom: 20px;
+    margin-bottom: 5px;
     border-radius: 5px;
     border: 1px solid #495057;
-    background-color: #2b2b3b;
+    background-color: #ffffff;
     color: #ffffff;
     font-size: 16px;
+}
+
+.form-control:focus {
+    background-color: #ffffff; 
+    color: #1e1e2f;
+}
+
+/* Ensure password fields retain correct "dot" display */
+input[type="password"] {
+    color: #1e1e2f;  /* Use dark color for password fields to keep dots visible */
+}
+
+input[type="text"],
+input[type="email"] {
+    color: #1e1e2f;  /* Ensure normal text fields have dark text */
+}
+
+/* Focus state remains consistent */
+.form-control:focus {
+    background-color: #ffffff;
+    color: #1e1e2f;  /* Keep dark text color for focused fields */
+}
+
+.form-group-btn {
+    margin-top: 20px;
+}
+
+.form-group-btn .btn-primary {
+    background-color: #f0ad4e;
+    border-color: #f0ad4e;
+    border-radius: 30px;
+    color: #1e1e2f;
+    margin-top: 10px;
+}
+
+.form-group-btn .btn-primary:hover {
+    background-color: #e09d3c;
+    border-color: #e09d3c;
+}
+
+.form-group-btn .btn-primary:active {
+    background-color: #d18b2f !important;
+    color: #000000 !important;
+}
+
+.form-group-btn .btn-block {
+    display: block;
+    width: 100%;
+    padding: 10px 0;
+    border-radius: 5px;
+}
+
+.login-container {
+    max-width: 400px;
+    margin: 100px auto;
+    padding: 20px;
+    background-color: #2b2b3b; /* Matches the dark background */
+    border: 1px solid #495057; /* Subtle border */
+    border-radius: 8px; /* Rounded corners */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); /* Subtle shadow */
+    text-align: center; /* Center text within */
+}
+
+.login-container p {
+    margin-bottom: 8px; /* Less margin between link sections */
+}
+
+.login-container h2 {
+    margin-bottom: 30px;
+    color: #f0ad4e; 
+}
+
+/* Divider between the login button and links */
+.login-divider {
+    border: 1px solid #495057;
+    margin: 20px 0;
+}
+
+/* Links below the form */
+.login-container a {
+    color: #f0ad4e;
+    text-decoration: none;
+}
+
+.login-container a:hover {
+    text-decoration: underline;
 }
 
 /* Button Styles */
@@ -95,6 +180,11 @@ body {
     border-color: #e09d3c;
 }
 
+.btn-primary:active {
+    background-color: #d18b2f !important; /* Color when the button is clicked */
+    color: #000000 !important; /* Text color when clicked */
+}
+
 .btn-secondary {
     background-color: #555;
     border-color: #555;
@@ -107,6 +197,12 @@ body {
     border-color: #545b62;
 }
 
+.btn-block {
+    display: block;
+    width: 100%;
+    padding: 10px 0;
+    border-radius: 5px;
+}
 
 /* Alerts and Messages */
 .alert {

@@ -42,10 +42,19 @@ limiter = Limiter(
     storage_uri="memory://",  # Uses memory cache, but data will persist in files
     storage_options={"cache": cache}  # Use Flask-Caching for storage
 )
+
+# Get the DATABASE_URL from the environment
+database_url = os.getenv('DATABASE_URL')
+
+# Replace 'postgres://' with 'postgresql://' for SQLAlchemy compatibility
+if database_url and database_url.startswith("postgres://"):
+    database_url = database_url.replace("postgres://", "postgresql://", 1)
+
 # Configuration for database and login management
 app.config['SECRET_KEY'] = 'your_secret_key_here'
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
 
 # Initialize extensions
 db = SQLAlchemy(app)

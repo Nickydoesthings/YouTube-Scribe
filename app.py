@@ -410,7 +410,7 @@ def generator():
         if not youtube_link:
             error = "Please provide a YouTube video URL."
         else:
-            _, video_title, thumbnail_url, duration = download_youtube_audio(youtube_link, metadata_only=True)
+            video_title, thumbnail_url, duration = fetch_video_metadata(youtube_link)
 
             if not video_title or not thumbnail_url:
                 error = "Failed to fetch video metadata."
@@ -424,12 +424,12 @@ def generator():
                     upgrade_reason=upgrade_reason,
                     video_length=video_length_formatted
                 )
-    
+
             # Convert duration from seconds to "minutes:seconds" format
             video_length_formatted = str(timedelta(seconds=duration)) if duration else None
 
             if current_user.is_authenticated and current_user.plan == 'pro':
-                max_duration = 3600  # 2 hours in seconds
+                max_duration = 3600  # 1 hour in seconds
             else:
                 max_duration = 900  # 15 minutes in seconds
 
@@ -465,11 +465,18 @@ def generator():
                         video_length=video_length_formatted
                     )
 
-                audio_file_path, _, _, _ = download_youtube_audio(youtube_link)
-                transcript = transcribe_audio_with_whisper_api(audio_file_path)
-                if os.path.exists(audio_file_path):
-                    os.remove(audio_file_path)
-                    logger.info(f"Deleted audio file: {audio_file_path}")
+                # Remove audio downloading and transcription
+                error = "No captions available for this video, and audio transcription is disabled."
+                return render_template(
+                    'generator.html',
+                    error=error,
+                    youtube_link=youtube_link,
+                    video_title=video_title,
+                    thumbnail_url=thumbnail_url,
+                    show_upgrade_popup=show_upgrade_popup,
+                    upgrade_reason=upgrade_reason,
+                    video_length=video_length_formatted
+                )
 
             try:
                 if transcript:
@@ -610,6 +617,9 @@ def ratelimit_handler(e):
     return render_template('429.html'), 429
 
 def download_youtube_audio(video_url, save_path='.', metadata_only=False):
+    # This might be causing issues with YouTube bot detection and is rarely used, and is only for pro users, so getting rid of it for now.
+
+    '''
     try:
         ydl_opts = {
             'format': 'bestaudio/best',
@@ -658,6 +668,9 @@ def download_youtube_audio(video_url, save_path='.', metadata_only=False):
     except Exception as e:
         logger.error(f"An error occurred while downloading audio: {e}")
         return None, None, None, None
+    '''
+    pass
+
 
 def download_youtube_captions(video_url):
     try:
@@ -703,6 +716,9 @@ def convert_vtt_to_text(vtt_content):
         return ''
 
 def transcribe_audio_with_whisper_api(audio_file_path):
+
+    # Temporarily removing functionality to subvert YT bot detection
+    '''
     try:
         with open(audio_file_path, 'rb') as audio_file:
             transcript = client.audio.transcriptions.create(
@@ -761,6 +777,8 @@ def summarize_text(text):
     except Exception as e:
         logger.error(f"An error occurred during text summarization: {e}")
         return None
+
+    '''
 
 # Generate a confirmation token
 def generate_confirmation_token(email):

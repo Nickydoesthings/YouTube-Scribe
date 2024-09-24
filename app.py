@@ -611,21 +611,23 @@ def fetch_video_metadata(video_url):
         ydl_opts = {
             'skip_download': True,
             'quiet': True,
-            'extract_flat': True,
+            'extract_flat': False,  # Set to False to get detailed info
             'http_headers': {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
                               'AppleWebKit/537.36 (KHTML, like Gecko) '
-                              'Chrome/93.0.4577.82 Safari/537.36',
+                              'Chrome/116.0.0.0 Safari/537.36',  # Use the latest Chrome UA
                 'Accept-Language': 'en-US,en;q=0.9',
                 'Accept-Charset': 'utf-8',
-                'Accept-Encoding': 'gzip, deflate',
+                'Accept-Encoding': 'gzip, deflate, br',
                 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
                 'Referer': 'https://www.youtube.com/',
+                'Connection': 'keep-alive',
             },
             'retries': 5,
             'timeout': 30,
-            'nocheckcertificate': True,  # Optional, if SSL errors occur
-            # 'cookiesfrombrowser': 'chrome',  # Use cookies from your browser to authenticate
+            'nocheckcertificate': True,
+            # 'cookiesfrombrowser': 'chrome',  # Removed previously
+            'force_generic_extractor': False,  # Ensure the YouTube extractor is used
         }
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info_dict = ydl.extract_info(video_url, download=False)
@@ -702,23 +704,25 @@ def download_youtube_captions(video_url):
     try:
         # Extract video ID using yt_dlp without downloading
         ydl_opts = {
-            'quiet': True,
             'skip_download': True,
-            'extract_flat': True,
+            'quiet': True,
+            'extract_flat': False,  # Set to False to get detailed info
             'http_headers': {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
                               'AppleWebKit/537.36 (KHTML, like Gecko) '
-                              'Chrome/93.0.4577.82 Safari/537.36',
+                              'Chrome/116.0.0.0 Safari/537.36',  # Use the latest Chrome UA
                 'Accept-Language': 'en-US,en;q=0.9',
                 'Accept-Charset': 'utf-8',
-                'Accept-Encoding': 'gzip, deflate',
+                'Accept-Encoding': 'gzip, deflate, br',
                 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
                 'Referer': 'https://www.youtube.com/',
+                'Connection': 'keep-alive',
             },
             'retries': 5,
             'timeout': 30,
-            'nocheckcertificate': True,  # Optional, if SSL errors occur
-            'cookiesfrombrowser': 'chrome',  # Use cookies from your browser to authenticate
+            'nocheckcertificate': True,
+            # 'cookiesfrombrowser': 'chrome',  # Removed previously
+            'force_generic_extractor': False,  # Ensure the YouTube extractor is used
         }
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info_dict = ydl.extract_info(video_url, download=False)

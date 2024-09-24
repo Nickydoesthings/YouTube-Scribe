@@ -618,12 +618,27 @@ def download_youtube_audio(video_url, save_path='.', metadata_only=False):
                 'preferredcodec': 'mp3',
                 'preferredquality': '192',
             }],
-            'postprocessor_args': [
-                '-ar', '44100'
-            ],
+            'postprocessor_args': ['-ar', '44100'],
             'prefer_ffmpeg': True,
             'keepvideo': False,
             'skip_download': metadata_only,
+            'http_headers': {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+                              'AppleWebKit/537.36 (KHTML, like Gecko) '
+                              'Chrome/93.0.4577.82 Safari/537.36',
+                'Accept-Language': 'en-US,en;q=0.9',
+                'Accept-Charset': 'utf-8',
+                'Accept-Encoding': 'gzip, deflate',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            },
+            'retries': 5,
+            'timeout': 30,
+            'extractor_args': {
+                'youtube': {
+                    'player_client': ['web']
+                }
+            },
+            'nocheckcertificate': True,  # Optional, if SSL errors occur
         }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:

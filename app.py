@@ -606,7 +606,6 @@ def fetch_metadata():
         logger.error(f"An error occurred while fetching metadata: {e}")
         return jsonify({'error': 'An unexpected error occurred.'}), 500
 
-
 def fetch_video_metadata(video_url):
     try:
         ydl_opts = {
@@ -626,7 +625,7 @@ def fetch_video_metadata(video_url):
             'retries': 5,
             'timeout': 30,
             'nocheckcertificate': True,  # Optional, if SSL errors occur
-            'cookiesfrombrowser': 'chrome',  # Use cookies from your browser to authenticate
+            # 'cookiesfrombrowser': 'chrome',  # Use cookies from your browser to authenticate
         }
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info_dict = ydl.extract_info(video_url, download=False)

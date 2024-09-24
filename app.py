@@ -425,10 +425,10 @@ def generator():
                     video_length=video_length_formatted
                 )
 
-            # Convert duration from seconds to "minutes:seconds" format
+            # Convert duration from seconds to "hours:minutes:seconds" format
             video_length_formatted = str(timedelta(seconds=duration)) if duration else None
 
-            if current_user.is_authenticated and current_user.plan == 'pro':
+            if current_user.plan == 'pro':
                 max_duration = 3600  # 1 hour in seconds
             else:
                 max_duration = 900  # 15 minutes in seconds
@@ -451,22 +451,7 @@ def generator():
             if captions:
                 transcript = captions
             else:
-                if not current_user.is_authenticated or current_user.plan == 'free':
-                    show_upgrade_popup = True
-                    upgrade_reason = 'no_captions'
-                    return render_template(
-                        'generator.html',
-                        error=error,
-                        youtube_link=youtube_link,
-                        video_title=video_title,
-                        thumbnail_url=thumbnail_url,
-                        show_upgrade_popup=show_upgrade_popup,
-                        upgrade_reason=upgrade_reason,
-                        video_length=video_length_formatted
-                    )
-
-                # Remove audio downloading and transcription
-                error = "No captions available for this video, and audio transcription is disabled."
+                error = "No captions available for this video."
                 return render_template(
                     'generator.html',
                     error=error,
@@ -483,9 +468,8 @@ def generator():
                     summary = summarize_text(transcript)
                     if summary:
                         html_summary = markdown.markdown(summary)
-                        if current_user.is_authenticated:
-                            current_user.usage_count += 1
-                            db.session.commit()
+                        current_user.usage_count += 1
+                        db.session.commit()
                     else:
                         error = "Failed to generate summary."
                 else:
@@ -494,7 +478,18 @@ def generator():
                 logger.error(f"An unexpected error occurred: {e}")
                 error = f"An unexpected error occurred: {e}"
 
-    return render_template('generator.html', summary=html_summary, error=error, youtube_link=youtube_link, video_title=video_title, thumbnail_url=thumbnail_url, show_upgrade_popup=show_upgrade_popup, upgrade_reason=upgrade_reason, video_length=video_length_formatted)
+    return render_template(
+        'generator.html',
+        summary=html_summary,
+        error=error,
+        youtube_link=youtube_link,
+        video_title=video_title,
+        thumbnail_url=thumbnail_url,
+        show_upgrade_popup=show_upgrade_popup,
+        upgrade_reason=upgrade_reason,
+        video_length=video_length_formatted
+    )
+
 
 @app.route('/download/pdf', methods=['POST'])
 @login_required
@@ -596,7 +591,7 @@ def fetch_metadata():
         return jsonify({'error': 'No YouTube link provided.'}), 400
 
     try:
-        _, video_title, thumbnail_url, duration = download_youtube_audio(youtube_link, metadata_only=True)
+        video_title, thumbnail_url, duration = fetch_video_metadata(youtube_link)
 
         if not video_title or not thumbnail_url:
             return jsonify({'error': 'Failed to fetch video metadata.'}), 500
@@ -610,6 +605,24 @@ def fetch_metadata():
     except Exception as e:
         logger.error(f"An error occurred while fetching metadata: {e}")
         return jsonify({'error': 'An unexpected error occurred.'}), 500
+
+
+def fetch_video_metadata(video_url):
+    try:
+        ydl_opts = {
+            'quiet': True,
+            'skip_download': True,
+            'extract_flat': True,  # Avoid fetching full video info
+        }
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info_dict = ydl.extract_info(video_url, download=False)
+            video_title = info_dict.get('title', 'Unknown Title')
+            thumbnail_url = info_dict.get('thumbnail', '')
+            duration = info_dict.get('duration', 0)  # Duration in seconds
+        return video_title, thumbnail_url, duration
+    except Exception as e:
+        logger.error(f"An error occurred while fetching video metadata: {e}")
+        return None, None, None
 
 # Error handler for rate limit exceeded (429 Too Many Requests)
 @app.errorhandler(429)
@@ -729,6 +742,9 @@ def transcribe_audio_with_whisper_api(audio_file_path):
     except Exception as e:
         logger.error(f"An error occurred during transcription: {e}")
         return None
+    '''
+    pass
+
 
 def summarize_text(text):
     try:
@@ -778,7 +794,6 @@ def summarize_text(text):
         logger.error(f"An error occurred during text summarization: {e}")
         return None
 
-    '''
 
 # Generate a confirmation token
 def generate_confirmation_token(email):

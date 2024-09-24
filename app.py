@@ -630,6 +630,7 @@ def download_youtube_audio(video_url, save_path='.', metadata_only=False):
                 'Accept-Charset': 'utf-8',
                 'Accept-Encoding': 'gzip, deflate',
                 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                'Referer': 'https://www.youtube.com/',
             },
             'retries': 5,
             'timeout': 30,

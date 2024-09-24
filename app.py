@@ -610,15 +610,29 @@ def fetch_metadata():
 def fetch_video_metadata(video_url):
     try:
         ydl_opts = {
-            'quiet': True,
             'skip_download': True,
-            'extract_flat': True,  # Avoid fetching full video info
+            'quiet': True,
+            'extract_flat': True,
+            'http_headers': {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+                              'AppleWebKit/537.36 (KHTML, like Gecko) '
+                              'Chrome/93.0.4577.82 Safari/537.36',
+                'Accept-Language': 'en-US,en;q=0.9',
+                'Accept-Charset': 'utf-8',
+                'Accept-Encoding': 'gzip, deflate',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                'Referer': 'https://www.youtube.com/',
+            },
+            'retries': 5,
+            'timeout': 30,
+            'nocheckcertificate': True,  # Optional, if SSL errors occur
+            'cookiesfrombrowser': 'chrome',  # Use cookies from your browser to authenticate
         }
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info_dict = ydl.extract_info(video_url, download=False)
             video_title = info_dict.get('title', 'Unknown Title')
             thumbnail_url = info_dict.get('thumbnail', '')
-            duration = info_dict.get('duration', 0)  # Duration in seconds
+            duration = info_dict.get('duration', 0)
         return video_title, thumbnail_url, duration
     except Exception as e:
         logger.error(f"An error occurred while fetching video metadata: {e}")
@@ -688,7 +702,25 @@ def download_youtube_audio(video_url, save_path='.', metadata_only=False):
 def download_youtube_captions(video_url):
     try:
         # Extract video ID using yt_dlp without downloading
-        ydl_opts = {'quiet': True, 'skip_download': True}
+        ydl_opts = {
+            'quiet': True,
+            'skip_download': True,
+            'extract_flat': True,
+            'http_headers': {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+                              'AppleWebKit/537.36 (KHTML, like Gecko) '
+                              'Chrome/93.0.4577.82 Safari/537.36',
+                'Accept-Language': 'en-US,en;q=0.9',
+                'Accept-Charset': 'utf-8',
+                'Accept-Encoding': 'gzip, deflate',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                'Referer': 'https://www.youtube.com/',
+            },
+            'retries': 5,
+            'timeout': 30,
+            'nocheckcertificate': True,  # Optional, if SSL errors occur
+            'cookiesfrombrowser': 'chrome',  # Use cookies from your browser to authenticate
+        }
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info_dict = ydl.extract_info(video_url, download=False)
             video_id = info_dict.get("id", None)

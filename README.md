@@ -2,6 +2,8 @@
 
 YouTube Scribe is a web application designed to quickly generate detailed written summaries and tutorials from YouTube videos. The app analyzes YouTube captions (or transcribes audio) to provide you with an easy-to-follow guide.
 
+Using the web app is as simple as pasting in a URL - YouTube scribe handles the rest and outputs a written tutorial based on the content video. All in just seconds :)
+
 This app relies heavily on OpenAI's ChatGPT API to turn captions into readable instructions. So, you'll need to bring your own API key. More info on that here: [OpenAI Quickstart](https://platform.openai.com/docs/quickstart).
 
 Simply paste your API key into the `.env` file, and you're good to go.

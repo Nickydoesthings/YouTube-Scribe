@@ -44,18 +44,29 @@ limiter = Limiter(
     storage_options={"cache": cache}  # Use Flask-Caching for storage
 )
 
-# Get the DATABASE_URL from the environment
+# Point to the users.db in the instance directory
+database_path = os.path.join(app.instance_path, 'users.db')
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or 'your-secret-key-here'
+
+# Ensure the instance directory exists
+os.makedirs(app.instance_path, exist_ok=True)
+
+# Get the database URL from environment variable, if it exists
 database_url = os.getenv('DATABASE_URL')
 
-# Replace 'postgres://' with 'postgresql://' for SQLAlchemy compatibility
+# If database_url is set and starts with "postgres://", update it for SQLAlchemy
 if database_url and database_url.startswith("postgres://"):
     database_url = database_url.replace("postgres://", "postgresql://", 1)
 
-# Configuration for database and login management
-app.config['SECRET_KEY'] = 'your_secret_key_here'
-app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+# Use the database_url if it's set, otherwise use the SQLite database
+app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{database_path}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+# Ensure the instance directory exists
+os.makedirs(app.instance_path, exist_ok=True)
+
+# Initialize the serializer
+serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
 
 # Initialize extensions
 db = SQLAlchemy(app)
@@ -394,16 +405,13 @@ def landing():
     return render_template('landing.html', user_plan=user_plan)
 
 @app.route('/generator', methods=['GET', 'POST'])
-@login_required
 def generator():
     error = None
     html_summary = None
     youtube_link = request.args.get('youtubeLink', '')
     video_title = None
     thumbnail_url = None
-    show_upgrade_popup = False
-    upgrade_reason = request.args.get('upgrade_reason', None)
-    video_length_formatted = None  # Variable to store formatted video length
+    video_length_formatted = None
 
     if request.method == 'POST':
         youtube_link = request.form.get('youtubeLink')
@@ -420,32 +428,13 @@ def generator():
                     youtube_link=youtube_link,
                     video_title=video_title,
                     thumbnail_url=thumbnail_url,
-                    show_upgrade_popup=show_upgrade_popup,
-                    upgrade_reason=upgrade_reason,
                     video_length=video_length_formatted
                 )
 
             # Convert duration from seconds to "hours:minutes:seconds" format
             video_length_formatted = str(timedelta(seconds=duration)) if duration else None
 
-            if current_user.plan == 'pro':
-                max_duration = 3600  # 1 hour in seconds
-            else:
-                max_duration = 900  # 15 minutes in seconds
-
-            if duration > max_duration:
-                show_upgrade_popup = True
-                upgrade_reason = 'video_duration'
-                return render_template(
-                    'generator.html',
-                    error=error,
-                    youtube_link=youtube_link,
-                    video_title=video_title,
-                    thumbnail_url=thumbnail_url,
-                    show_upgrade_popup=show_upgrade_popup,
-                    upgrade_reason=upgrade_reason,
-                    video_length=video_length_formatted
-                )
+            # Remove the duration check for pro users
 
             captions = download_youtube_captions(youtube_link)
             if captions:
@@ -458,8 +447,6 @@ def generator():
                     youtube_link=youtube_link,
                     video_title=video_title,
                     thumbnail_url=thumbnail_url,
-                    show_upgrade_popup=show_upgrade_popup,
-                    upgrade_reason=upgrade_reason,
                     video_length=video_length_formatted
                 )
 
@@ -468,8 +455,7 @@ def generator():
                     summary = summarize_text(transcript)
                     if summary:
                         html_summary = markdown.markdown(summary)
-                        current_user.usage_count += 1
-                        db.session.commit()
+                        # Remove the usage count increment
                     else:
                         error = "Failed to generate summary."
                 else:
@@ -485,18 +471,13 @@ def generator():
         youtube_link=youtube_link,
         video_title=video_title,
         thumbnail_url=thumbnail_url,
-        show_upgrade_popup=show_upgrade_popup,
-        upgrade_reason=upgrade_reason,
         video_length=video_length_formatted
     )
 
 
 @app.route('/download/pdf', methods=['POST'])
-@login_required
 def download_pdf():
-    if current_user.plan != 'pro':
-        return redirect(url_for('generator', show_upgrade_popup=True, upgrade_reason='download_pdf'))
-
+    # Remove the pro plan check
     summary = request.form.get('summary')
 
     if not summary:
@@ -511,11 +492,8 @@ def download_pdf():
     return send_file(pdf_file, as_attachment=True, download_name="summary.pdf")
 
 @app.route('/download/word', methods=['POST'])
-@login_required
 def download_word():
-    if current_user.plan != 'pro':
-        return redirect(url_for('generator', show_upgrade_popup=True, upgrade_reason='download_word'))
-
+    # Remove the pro plan check
     summary = request.form.get('summary')
 
     if not summary:

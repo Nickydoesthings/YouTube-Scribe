@@ -44,22 +44,17 @@
                 <div class="tutorial-content">
                     {{ summary | safe }}
                 </div>
-                {% if current_user.is_authenticated and current_user.plan == 'pro' %}
-                    <form method="POST" action="{{ url_for('download_pdf') }}">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <input type="hidden" name="summary" value="{{ summary | safe }}">
-                        <button type="submit" class="btn btn-secondary mt-3">Download as PDF</button>
-                    </form>
+                <form method="POST" action="{{ url_for('download_pdf') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="summary" value="{{ summary | safe }}">
+                    <button type="submit" class="btn btn-secondary mt-3">Download as PDF</button>
+                </form>
 
-                    <form method="POST" action="{{ url_for('download_word') }}">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <input type="hidden" name="summary" value="{{ summary | safe }}">
-                        <button type="submit" class="btn btn-secondary mt-3">Download as Word</button>
-                    </form>                    
-                {% else %}
-                    <button id="downloadPdfButton" class="btn btn-secondary mt-3">Download as PDF</button>
-                    <button id="downloadWordButton" class="btn btn-secondary mt-3">Download as Word</button>
-                {% endif %}
+                <form method="POST" action="{{ url_for('download_word') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="summary" value="{{ summary | safe }}">
+                    <button type="submit" class="btn btn-secondary mt-3">Download as Word</button>
+                </form>                    
             </div>
         </div>
     {% elif error %}
@@ -69,33 +64,8 @@
     {% endif %}
     </div>
 
-    <!-- Upgrade Popup Modal -->
-    <div class="modal fade" id="upgradeModal" tabindex="-1" aria-labelledby="upgradeModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Upgrade to Pro</h5>
-                    <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close" onclick="hideUpgradeModal()">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body" id="upgradeModalBody">
-                    <!-- The message will be set dynamically -->
-                </div>
-                <div class="modal-footer">
-                    <!-- Optionally remove this button if you include the link in the message -->
-                    <!-- <a href="{{ url_for('pricing') }}" class="btn btn-primary">View Pricing</a> -->
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="hideUpgradeModal()">Close</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- JavaScript to handle form submission, video metadata fetch, and loading spinner -->
     <script>
-        // Define the pricing URL
-        const pricingUrl = "{{ url_for('pricing') }}";
-
         document.addEventListener("DOMContentLoaded", function() {
             const form = document.getElementById('generatorForm');
             const youtubeLinkInput = document.getElementById('youtubeLink');
@@ -157,75 +127,10 @@
                 });
             });
 
-            function showUpgradeModal(upgradeReason, videoLength = null) {
-                const upgradeModalBody = document.getElementById('upgradeModalBody');
-                const upgradeModalFooter = document.querySelector('.modal-footer');
-                
-                let message = '';
-
-                if (upgradeReason === 'download_pdf') {
-                    message = 'Downloading summaries as PDF is a Pro feature.';
-                } else if (upgradeReason === 'no_captions') {
-                    message = 'Transcribing videos without captions is a Pro feature.';
-                } else if (upgradeReason === 'video_duration') {
-                    if (videoLength !== null) {
-                        message = `Video Length: ${videoLength}. Processing videos longer than 15 minutes is a Pro feature.`;
-                    } else {
-                        message = 'Processing videos longer than 15 minutes is a Pro feature.';
-                    }
-                } else {
-                    message = 'This feature is available for Pro users only.';
-                }
-
-                // Update the modal body with the message
-                upgradeModalBody.innerHTML = message;
-
-                // Add the "Upgrade to Pro" button in the modal footer, next to the "Close" button
-                upgradeModalFooter.innerHTML = `
-                    <a href="{{ url_for('pricing') }}" class="btn btn-primary">Upgrade to Pro</a>
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="hideUpgradeModal()">Close</button>
-                `;
-
-                var modal = new bootstrap.Modal(document.getElementById('upgradeModal'));
-                modal.show();
-            }
-
-            function hideUpgradeModal() {
-                var modalElement = document.getElementById('upgradeModal');
-                var modal = bootstrap.Modal.getInstance(modalElement);
-                if (modal) {
-                    modal.hide();
-                }
-            }
-
             const summaryExists = {{ (summary is not none and summary|length > 0) | tojson }};
             if (summaryExists) {
                 hideLoadingSpinner();
             }
-
-            const showUpgradePopup = {{ show_upgrade_popup | tojson }};
-            const upgradeReason = {{ upgrade_reason | tojson }};
-            const videoLength = {{ video_length | tojson | default('null') }};
-
-            if (showUpgradePopup) {
-                showUpgradeModal(upgradeReason, videoLength);
-            }
-
-            const downloadPdfButton = document.getElementById('downloadPdfButton');
-            if (downloadPdfButton) {
-                downloadPdfButton.addEventListener('click', function() {
-                    showUpgradeModal('download_pdf');
-                });
-            }
-
-            const downloadWordButton = document.getElementById('downloadWordButton');
-            if (downloadWordButton) {
-                downloadWordButton.addEventListener('click', function() {
-                    showUpgradeModal('download_word');
-                });
-            }
-
-
         });
     </script>
 

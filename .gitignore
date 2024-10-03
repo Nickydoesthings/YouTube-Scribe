@@ -12,12 +12,6 @@ env/
 instance/
 .flaskenv
 
-# Static files
-staticfiles/
-
-# Local environments
-.env
-
 # IDE settings (optional, depending on your editor)
 .vscode/
 .idea/
